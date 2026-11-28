@@ -19,11 +19,16 @@
 package infra.docker.compose.core;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import infra.app.logging.LogLevel;
 import infra.docker.compose.core.DockerCliInspectResponse.Config;
@@ -38,6 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.never;
 
 /**
@@ -48,6 +54,19 @@ import static org.mockito.Mockito.never;
  * @author Phillip Webb
  */
 class DefaultDockerComposeTests {
+
+  @Test
+  void factoryCreatesComposeClientWithoutRunningCommands(@TempDir Path directory) throws Exception {
+    var path = Files.writeString(directory.resolve("compose.yaml"), "services: {}\n");
+    var file = DockerComposeFile.of(path.toFile());
+    try (var clients = mockConstruction(DockerCli.class)) {
+      assertThat(DockerCompose.FORCE_STOP).isZero();
+      assertThat(DockerCompose.get(file, HOST, Set.of())).isInstanceOf(DefaultDockerCompose.class);
+      assertThat(DockerCompose.get(file, HOST, Set.of("test"), List.of("--ansi", "never")))
+              .isInstanceOf(DefaultDockerCompose.class);
+      assertThat(clients.constructed()).hasSize(2);
+    }
+  }
 
   private static final String HOST = "192.168.1.1";
 

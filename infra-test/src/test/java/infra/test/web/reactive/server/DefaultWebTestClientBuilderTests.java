@@ -26,11 +26,32 @@ import infra.http.reactive.client.ClientHttpConnector;
 import infra.web.reactive.client.ExchangeFilterFunction;
 import infra.web.reactive.client.ExchangeStrategies;
 import infra.web.util.DefaultUriBuilderFactory;
+import infra.web.handler.function.RouterFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.Mockito.mock;
+
 
 class DefaultWebTestClientBuilderTests {
+
+  @Test
+  void routerSpecRetainsRouterAndNotifiesEachConfigurer() {
+    RouterFunction<?> router = mock(RouterFunction.class);
+    var spec = new DefaultRouterFunctionSpec(router);
+    var calls = new ArrayList<WebTestClient.MockServerSpec<?>>();
+    assertThat(spec.<WebTestClient.RouterFunctionSpec>apply(new MockServerConfigurer() { })).isSameAs(spec);
+    assertThat(spec.<WebTestClient.RouterFunctionSpec>apply(new MockServerConfigurer() {
+      @Override
+      public void afterConfigureAdded(WebTestClient.MockServerSpec<?> serverSpec) {
+        calls.add(serverSpec);
+      }
+    })).isSameAs(spec);
+    assertThat(calls).containsExactly(spec);
+    assertThat(spec.getRouterFunction()).isSameAs(router);
+    assertThat(spec.configureClient()).isNotNull();
+    assertThat(spec.build()).isNotNull();
+  }
 
   private final ClientHttpConnector connector = new HttpHandlerConnector((request, response) -> response.setComplete());
 

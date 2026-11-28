@@ -30,6 +30,34 @@ class Db2CallMetaDataProviderTests {
   private final DatabaseMetaData metadata = mock();
 
   @Test
+  void hanaPreservesIdentifierCaseDespiteDriverUppercaseFlag() throws SQLException {
+    given(metadata.storesUpperCaseIdentifiers()).willReturn(true);
+    var provider = new HanaCallMetaDataProvider(metadata);
+    provider.initializeWithMetaData(metadata);
+    assertThat(provider.isStoresUpperCaseIdentifiers()).isFalse();
+  }
+
+  @Test
+  void mysqlDoesNotSupportGeneratedKeyColumnNameArrays() throws SQLException {
+    var provider = new MySQLTableMetaDataProvider(metadata);
+    assertThat(provider.isGeneratedKeysColumnNameArraySupported()).isFalse();
+  }
+
+  @Test
+  void sybaseNormalizesAtPrefixedParameterNamesAndDetectsReturnValue() throws SQLException {
+    given(metadata.storesUpperCaseIdentifiers()).willReturn(true);
+    var provider = new SybaseCallMetaDataProvider(metadata);
+    provider.initializeWithMetaData(metadata);
+    assertThat(provider.parameterNameToUse(null)).isNull();
+    assertThat(provider.parameterNameToUse("@amount")).isEqualTo("AMOUNT");
+    assertThat(provider.parameterNameToUse("amount")).isEqualTo("AMOUNT");
+    assertThat(provider.namedParameterBindingToUse("@amount")).isEqualTo("@amount = ?");
+    assertThat(provider.byPassReturnParameter("RETURN_VALUE")).isTrue();
+    assertThat(provider.byPassReturnParameter("@return_value")).isTrue();
+    assertThat(provider.byPassReturnParameter("@amount")).isFalse();
+  }
+
+  @Test
   void usesUppercaseUserForDefaultSchemaAndDriverCaseForExplicitNames() throws SQLException {
     given(metadata.getUserName()).willReturn("db2User");
     given(metadata.supportsCatalogsInProcedureCalls()).willReturn(true);

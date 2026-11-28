@@ -58,6 +58,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class AnnotationTransactionAttributeSourceTests {
 
+  @Test
+  void customParserDefaultsToConsideringEveryClass() {
+    TransactionAnnotationParser parser = element -> null;
+    assertThat(parser.isCandidateClass(String.class)).isTrue();
+    assertThat(parser.isCandidateClass(TestBean1.class)).isTrue();
+  }
+
   private final AnnotationTransactionAttributeSource attributeSource = new AnnotationTransactionAttributeSource();
 
   @Test

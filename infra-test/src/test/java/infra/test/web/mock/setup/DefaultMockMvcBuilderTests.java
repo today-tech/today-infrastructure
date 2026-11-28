@@ -20,6 +20,8 @@ package infra.test.web.mock.setup;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
+
 import infra.beans.DirectFieldAccessor;
 import infra.context.ApplicationContext;
 import infra.context.annotation.AnnotatedBeanDefinitionReader;
@@ -31,6 +33,9 @@ import infra.web.config.annotation.EnableWebMvc;
 
 import static infra.test.web.mock.setup.MockMvcBuilders.webAppContextSetup;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link DefaultMockMvcBuilder}.
@@ -41,6 +46,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Stephane Nicoll
  */
 public class DefaultMockMvcBuilderTests {
+
+  @Test
+  void customBuilderMustOptInToDefaultResponseEncoding() {
+    var builder = mock(ConfigurableMockMvcBuilder.class, CALLS_REAL_METHODS);
+    assertThatThrownBy(() -> builder.defaultResponseCharacterEncoding(StandardCharsets.UTF_8))
+            .isInstanceOf(UnsupportedOperationException.class).hasMessageContaining("not supported");
+  }
 
   @Test
   public void rootWacMockContainerAttributeNotPreviouslySetWithContextHierarchy() {

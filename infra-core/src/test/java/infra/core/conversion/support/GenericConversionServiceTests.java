@@ -42,6 +42,7 @@ import infra.core.conversion.ConversionFailedException;
 import infra.core.conversion.Converter;
 import infra.core.conversion.ConverterFactory;
 import infra.core.conversion.ConverterNotFoundException;
+import infra.core.conversion.ConversionService;
 import infra.core.conversion.GenericConverter;
 import infra.core.io.DescriptiveResource;
 import infra.core.io.Resource;
@@ -68,6 +69,20 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 class GenericConversionServiceTests {
 
   private final GenericConversionService conversionService = new GenericConversionService();
+
+  @Test
+  void converterLookupOverloadsResolveTheSameRegisteredConverter() {
+    this.conversionService.addConverterFactory(new StringToNumberConverterFactory());
+    ConversionService service = this.conversionService;
+    var targetType = TypeDescriptor.valueOf(Integer.class);
+    var converter = service.getConverter(TypeDescriptor.valueOf(String.class), targetType);
+    assertThat(converter).isNotNull();
+    assertThat(service.getConverter(String.class, targetType)).isSameAs(converter);
+    assertThat(service.getConverter("42", targetType)).isSameAs(converter);
+    assertThat(service.getConverter("42", Integer.class)).isSameAs(converter);
+    assertThat(service.getConverter(String.class, Integer.class)).isSameAs(converter);
+    assertThatIllegalArgumentException().isThrownBy(() -> service.getConverter((Object) null, targetType));
+  }
 
   @Test
   void canConvert() {

@@ -33,6 +33,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ReactiveHealthContributorTests {
 
   @Test
+  void adaptPreservesAbsentContributor() {
+    assertThat(ReactiveHealthContributor.adapt(null)).isNull();
+  }
+
+  @Test
   void adaptWhenHealthIndicatorReturnsHealthIndicatorReactiveAdapter() {
     HealthIndicator indicator = () -> Health.outOfService().build();
     ReactiveHealthContributor adapted = ReactiveHealthContributor.adapt(indicator);

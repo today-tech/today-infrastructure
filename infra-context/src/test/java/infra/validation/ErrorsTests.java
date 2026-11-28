@@ -24,12 +24,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author <a href="https://github.com/TAKETODAY">海子 Yang</a>
  * @since 5.0 2025/3/28 22:13
  */
 class ErrorsTests {
+
+  @Test
+  void minimalBindingResultDoesNotTrackFieldValuesOrSuppressions() {
+    var result = mock(BindingResult.class, CALLS_REAL_METHODS);
+    result.recordFieldValue("sample", String.class, "value");
+    result.recordSuppressedField("ignored");
+    assertThat(result.getSuppressedFields()).isEmpty();
+  }
 
   @Test
   void hasErrorsReturnsFalseWhenNoErrorsPresent() {

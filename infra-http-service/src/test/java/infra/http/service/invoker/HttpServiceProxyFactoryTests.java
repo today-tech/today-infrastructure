@@ -28,6 +28,7 @@ import infra.http.service.annotation.GetExchange;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -37,6 +38,15 @@ import static org.mockito.ArgumentMatchers.eq;
  * @since 5.0 2026/2/17 16:44
  */
 class HttpServiceProxyFactoryTests {
+
+  @Test
+  void defaultRequestExecutionFallsBackToBodyExchange() {
+    var adapter = mock(HttpExchangeAdapter.class, CALLS_REAL_METHODS);
+    given(adapter.exchangeForBody(any(), eq(ParameterizedTypeReference.forType(String.class))))
+            .willReturn("sample");
+    assertThat(HttpServiceProxyFactory.forAdapter(adapter).build().createClient(Service.class).execute())
+            .isEqualTo("sample");
+  }
 
   @Test
   void requestValuesProcessorAddedAfterBuildDoesNotAffectFactory() {

@@ -41,9 +41,13 @@ import infra.beans.testfixture.beans.TestBean;
 import infra.core.annotation.AnnotationAwareOrderComparator;
 import infra.core.annotation.Order;
 import infra.core.testfixture.TimeStamped;
+import infra.util.ClassUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatRuntimeException;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
 
 /**
  * Also tests AdvisedSupport and ProxyCreatorSupport superclasses.
@@ -54,6 +58,14 @@ import static org.assertj.core.api.Assertions.assertThatRuntimeException;
  * @since 14.05.2003
  */
 class ProxyFactoryTests {
+
+  @Test
+  void defaultProxyCreationUsesDefaultClassLoader() {
+    var proxy = mock(AopProxy.class, CALLS_REAL_METHODS);
+    var target = new TestBean();
+    given(proxy.getProxy(ClassUtils.getDefaultClassLoader())).willReturn(target);
+    assertThat(proxy.getProxy()).isSameAs(target);
+  }
 
   @Test
   void indexOfMethods() {

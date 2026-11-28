@@ -30,15 +30,45 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import reactor.core.publisher.Mono;
+import infra.web.ServerHttpExchange;
+import infra.web.async.DeferredResult;
+import java.util.concurrent.CompletionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Arjen Poutsma
  */
 class DefaultAsyncServerResponseTests {
+
+  @Test
+  void pendingResponseExposesMetadataAfterCompletion() throws Exception {
+    var future = new CompletableFuture<ServerResponse>();
+    var response = new DefaultAsyncServerResponse(future, Duration.ofSeconds(1));
+    assertThatIllegalStateException().isThrownBy(response::statusCode);
+    var deferred = (DeferredResult<?>) response.writeTo(mock(ServerHttpExchange.class), mock(ServerResponse.Context.class));
+    assertThat(deferred.hasResult()).isFalse();
+    var completed = ServerResponse.ok().header("X-Sample", "value").build();
+    future.complete(completed);
+    assertThat(deferred.getResult()).isSameAs(completed);
+    assertThat(response.statusCode()).isEqualTo(completed.statusCode());
+    assertThat(response.rawStatusCode()).isEqualTo(200);
+    assertThat(response.headers()).isEqualTo(completed.headers());
+    assertThat(response.cookies()).isEqualTo(completed.cookies());
+  }
+
+  @Test
+  void deferredResponseUnwrapsCompletionFailure() throws Exception {
+    var future = new CompletableFuture<ServerResponse>();
+    var response = new DefaultAsyncServerResponse(future, null);
+    var deferred = (DeferredResult<?>) response.writeTo(mock(ServerHttpExchange.class), mock(ServerResponse.Context.class));
+    var failure = new IllegalArgumentException("failed");
+    future.completeExceptionally(new CompletionException(failure));
+    assertThat(deferred.getResult()).isSameAs(failure);
+  }
 
   @Test
   @Timeout(5)

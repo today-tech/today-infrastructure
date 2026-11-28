@@ -23,6 +23,7 @@ import java.lang.instrument.ClassFileTransformer;
 import infra.util.ClassUtils;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -30,6 +31,88 @@ import static org.mockito.Mockito.mock;
  * @since 4.0 2023/8/14 14:42
  */
 class TomcatLoadTimeWeaverTests {
+
+  @Test
+  void compatibleLoaderReceivesTransformerAndCreatesThrowawayLoader() {
+    var loader = new CompatibleLoader();
+    var weaver = new TomcatLoadTimeWeaver(loader);
+    var transformer = mock(ClassFileTransformer.class);
+    weaver.addTransformer(transformer);
+    assertThat(loader.transformer).isSameAs(transformer);
+    assertThat(weaver.getInstrumentableClassLoader()).isSameAs(loader);
+    assertThat(weaver.getThrowawayClassLoader()).isNotSameAs(loader);
+  }
+
+  @Test
+  void defaultConstructorUsesCompatibleContextClassLoader() {
+    var loader = new CompatibleLoader() {
+      @Override
+      public Class<?> loadClass(String name) throws ClassNotFoundException {
+        if (TomcatLoadTimeWeaver.INSTRUMENTABLE_LOADER_CLASS_NAME.equals(name)) {
+          return Runnable.class;
+        }
+        return super.loadClass(name);
+      }
+    };
+    var thread = Thread.currentThread();
+    var previous = thread.getContextClassLoader();
+    try {
+      thread.setContextClassLoader(loader);
+      assertThat(new TomcatLoadTimeWeaver().getInstrumentableClassLoader()).isSameAs(loader);
+    }
+    finally {
+      thread.setContextClassLoader(previous);
+    }
+  }
+
+  @Test
+  void invocationFailuresPreserveLoaderCause() {
+    var loader = new CompatibleLoader();
+    var weaver = new TomcatLoadTimeWeaver(loader);
+    loader.failure = new IllegalStateException("loader failure");
+    assertThatThrownBy(() -> weaver.addTransformer(mock(ClassFileTransformer.class)))
+            .hasMessage("Tomcat addTransformer method threw exception").hasCause(loader.failure);
+    assertThatThrownBy(weaver::getThrowawayClassLoader)
+            .hasMessage("Tomcat copy method threw exception").hasCause(loader.failure);
+  }
+
+  @Test
+  void incompatibleCopyResultReportsReflectiveInvocationFailure() {
+    var weaver = new TomcatLoadTimeWeaver(new IncompatibleLoader());
+    assertThatThrownBy(weaver::getThrowawayClassLoader)
+            .hasMessage("Could not invoke Tomcat copy method").hasCauseInstanceOf(ClassCastException.class);
+  }
+
+  public static class CompatibleLoader extends ClassLoader {
+
+    ClassFileTransformer transformer;
+
+    IllegalStateException failure;
+
+    public void addTransformer(ClassFileTransformer transformer) {
+      if (failure != null) {
+        throw failure;
+      }
+      this.transformer = transformer;
+    }
+
+    public ClassLoader getThrowawayClassLoader() {
+      if (failure != null) {
+        throw failure;
+      }
+      return new ClassLoader(this) { };
+    }
+  }
+
+  static class IncompatibleLoader extends ClassLoader {
+
+    public void addTransformer(ClassFileTransformer transformer) {
+    }
+
+    public String copyWithoutTransformers() {
+      return "not a class loader";
+    }
+  }
 
   @Test
   void tomcatLoadTimeWeaver() {

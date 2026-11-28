@@ -22,6 +22,9 @@ import org.junit.jupiter.api.Test;
 
 import infra.web.mock.MockResponse;
 import infra.test.web.mock.StubMvcResult;
+import infra.test.web.mock.ResultMatcher;
+
+import java.util.ArrayList;
 
 import static infra.test.web.mock.result.MockMvcResultMatchers.forwardedUrl;
 import static infra.test.web.mock.result.MockMvcResultMatchers.forwardedUrlPattern;
@@ -30,6 +33,7 @@ import static infra.test.web.mock.result.MockMvcResultMatchers.redirectedUrl;
 import static infra.test.web.mock.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static infra.test.web.mock.result.MockMvcResultMatchers.redirectedUrlTemplate;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
@@ -39,6 +43,24 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
  * @author Sam Brannen
  */
 public class MockMvcResultMatchersTests {
+
+  @Test
+  void matchAllRunsMatchersInOrderAndStopsOnFailure() throws Exception {
+    var calls = new ArrayList<String>();
+    var result = noRedirectOrForwardStub();
+    ResultMatcher first = actual -> {
+      assertThat(actual).isSameAs(result);
+      calls.add("first");
+    };
+    ResultMatcher second = actual -> calls.add("second");
+    ResultMatcher.matchAll(first, second).match(result);
+    assertThat(calls).containsExactly("first", "second");
+    calls.clear();
+    var failure = new AssertionError("failed matcher");
+    assertThatExceptionOfType(AssertionError.class).isThrownBy(() ->
+            ResultMatcher.matchAll(first, actual -> { throw failure; }, second).match(result)).isSameAs(failure);
+    assertThat(calls).containsExactly("first");
+  }
 
   @Test
   public void redirect() throws Exception {

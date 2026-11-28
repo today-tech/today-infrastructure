@@ -29,9 +29,12 @@ import infra.beans.factory.BeanFactory;
 import infra.context.annotation.AnnotationConfigApplicationContext;
 import infra.context.annotation.Bean;
 import infra.context.annotation.Configuration;
+import infra.core.MethodParameter;
 import infra.core.Ordered;
 import infra.core.PriorityOrdered;
 import infra.core.annotation.Order;
+import infra.http.HttpInputMessage;
+import infra.http.converter.SmartHttpMessageConverter;
 import infra.web.annotation.ControllerAdvice;
 import infra.web.annotation.RestController;
 import jakarta.annotation.Priority;
@@ -39,6 +42,7 @@ import jakarta.annotation.Priority;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -47,6 +51,17 @@ import static org.mockito.Mockito.verify;
  * @since 4.0 2022/2/11 21:06
  */
 class ControllerAdviceBeanTests {
+
+  @Test
+  void requestBodyAdviceDefaultsLeaveBodyUntouched() throws Exception {
+    var advice = mock(RequestBodyAdvice.class, CALLS_REAL_METHODS);
+    var parameter = new MethodParameter(String.class.getMethod("contains", CharSequence.class), 0);
+    var input = mock(HttpInputMessage.class);
+    var converter = mock(SmartHttpMessageConverter.class);
+    assertThat(advice.determineReadHints(parameter, String.class, converter)).isNull();
+    assertThat(advice.afterBodyRead("sample", input, parameter, String.class, converter)).isEqualTo("sample");
+    assertThat(advice.handleEmptyBody(null, input, parameter, String.class, converter)).isNull();
+  }
 
   @Test
   public void constructorPreconditions() {

@@ -22,6 +22,7 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -38,6 +39,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
@@ -63,11 +65,120 @@ import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author TODAY 2021/3/9 20:14
  */
 class ResourceTests {
+
+  @Test
+  void abstractResourceDefaultsToStreamAndClosesItAfterProbing() throws Exception {
+    var closed = new AtomicBoolean();
+    var resource = new AbstractResource() {
+      @Override
+      public String toString() {
+        return "sample stream resource";
+      }
+
+      @Override
+      public InputStream getInputStream() {
+        return new ByteArrayInputStream(new byte[513]) {
+          @Override
+          public void close() throws IOException {
+            closed.set(true);
+            throw new IOException("close failed");
+          }
+        };
+      }
+    };
+    assertThat(resource.getName()).isNull();
+    assertThat(resource.isOpen()).isFalse();
+    assertThat(resource.isFile()).isFalse();
+    assertThat(resource.exists()).isFalse();
+    assertThat(closed.get()).isTrue();
+    closed.set(false);
+    assertThat(resource.contentLength()).isEqualTo(513);
+    assertThat(closed.get()).isTrue();
+    assertThatExceptionOfType(FileNotFoundException.class).isThrownBy(resource::getURL);
+    assertThatExceptionOfType(FileNotFoundException.class).isThrownBy(resource::getFile);
+    assertThatExceptionOfType(FileNotFoundException.class).isThrownBy(() -> resource.createRelative("sibling"));
+  }
+
+  @Test
+  void abstractResourceUsesFileForExistenceAndTimestamp(@TempDir Path directory) throws Exception {
+    Path path = directory.resolve("sample.txt");
+    var resource = new AbstractResource() {
+      @Override
+      public String toString() {
+        return path.toString();
+      }
+
+      @Override
+      public boolean isFile() {
+        return true;
+      }
+
+      @Override
+      public File getFile() {
+        return path.toFile();
+      }
+
+      @Override
+      public InputStream getInputStream() {
+        throw new AssertionError("File-backed existence must not open a stream");
+      }
+    };
+    assertThat(resource.exists()).isFalse();
+    assertThatExceptionOfType(FileNotFoundException.class).isThrownBy(resource::lastModified);
+    Files.writeString(path, "sample");
+    assertThat(resource.isReadable()).isTrue();
+    assertThat(resource.lastModified()).isEqualTo(path.toFile().lastModified());
+  }
+
+  @Test
+  void abstractResourceUsesUrlForIdentityAndReportsInvalidUri() throws Exception {
+    URL url = URI.create("file:/sample").toURL();
+    var first = abstractLocation(url);
+    var second = abstractLocation(url);
+    assertThat(first.getURI()).isEqualTo(url.toURI());
+    assertThat(first).isEqualTo(second);
+    assertThat(first.hashCode()).isEqualTo(first.toString().hashCode());
+    assertThat(first.equals(first)).isTrue();
+    assertThat(first).isNotEqualTo("sample");
+    assertThat(first.toString()).contains("file:/sample");
+    var invalid = abstractLocation(new URL("file:/invalid path"));
+    assertThatExceptionOfType(IOException.class).isThrownBy(invalid::getURI).withCauseInstanceOf(URISyntaxException.class);
+    var connection = mock(HttpURLConnection.class);
+    first.customizeConnection((URLConnection) connection);
+    verify(connection).setRequestMethod("HEAD");
+    assertThat(first.exists()).isTrue();
+    assertThat(first).isNotEqualTo(new DescriptiveResource("different location"));
+  }
+
+  private static AbstractResource abstractLocation(URL url) {
+    return new AbstractResource() {
+      @Override
+      public URL getURL() {
+        return url;
+      }
+
+      @Override
+      public boolean isFile() {
+        return true;
+      }
+
+      @Override
+      public File getFile() throws IOException {
+        throw new IOException("No direct file access");
+      }
+
+      @Override
+      public InputStream getInputStream() {
+        return InputStream.nullInputStream();
+      }
+    };
+  }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("resource")

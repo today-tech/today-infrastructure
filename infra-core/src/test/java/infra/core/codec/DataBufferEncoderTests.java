@@ -21,15 +21,23 @@ package infra.core.codec;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import infra.core.ResolvableType;
 import infra.core.io.buffer.DataBuffer;
 import infra.core.testfixture.codec.AbstractEncoderTests;
+import infra.core.io.buffer.DefaultDataBufferFactory;
+import infra.logging.Logger;
 import infra.util.MimeType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 /**
  * @author Sebastien Deleuze
@@ -42,6 +50,21 @@ class DataBufferEncoderTests extends AbstractEncoderTests<DataBufferEncoder> {
 
   DataBufferEncoderTests() {
     super(new DataBufferEncoder());
+  }
+
+  @Test
+  void debugLoggingDoesNotChangeEncodedBuffer() {
+    var logger = mock(Logger.class);
+    given(logger.isDebugEnabled()).willReturn(true);
+    this.encoder.setLogger(logger);
+    var factory = DefaultDataBufferFactory.sharedInstance;
+    var buffer = factory.wrap(this.fooBytes);
+    var type = ResolvableType.forClass(DataBuffer.class);
+    var hints = Map.<String, Object>of(Hints.LOG_PREFIX_HINT, "sample");
+    StepVerifier.create(this.encoder.encode(Mono.just(buffer), factory, type, null, hints))
+            .expectNext(buffer).verifyComplete();
+    assertThat(this.encoder.encodeValue(buffer, factory, type, null, hints)).isSameAs(buffer);
+    verify(logger, times(2)).debug("{} Writing {} bytes", "sample", this.fooBytes.length);
   }
 
   @Override

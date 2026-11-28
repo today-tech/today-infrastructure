@@ -26,6 +26,8 @@ import java.util.Locale;
 
 import javax.money.CurrencyUnit;
 import javax.money.MonetaryAmount;
+import javax.money.Monetary;
+import javax.money.format.MonetaryFormats;
 
 import infra.beans.PropertyValues;
 import infra.core.i18n.LocaleContextHolder;
@@ -35,12 +37,31 @@ import infra.format.support.FormattingConversionService;
 import infra.validation.DataBinder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mockStatic;
 
 /**
  * @author Juergen Hoeller
  * @since 4.0
  */
 public class MoneyFormattingTests {
+
+  @Test
+  void monetaryAmountFormatterUsesLocaleOrNamedFormat() {
+    var amount = Monetary.getDefaultAmountFactory().setCurrency("USD").setNumber(12.5).create();
+    var formatter = new MonetaryAmountFormatter();
+    var localeFormat = MonetaryFormats.getAmountFormat(Locale.US);
+    var text = formatter.print(amount, Locale.US);
+    assertThat(text).isEqualTo(localeFormat.format(amount));
+    assertThat(formatter.parse(text, Locale.US)).isEqualTo(localeFormat.parse(text));
+
+    var named = new MonetaryAmountFormatter("default");
+    formatter.setFormatName("default");
+    try (var formats = mockStatic(MonetaryFormats.class)) {
+      formats.when(() -> MonetaryFormats.getAmountFormat("default")).thenReturn(localeFormat);
+      assertThat(named.print(amount, Locale.US)).isEqualTo(text);
+      assertThat(formatter.print(amount, Locale.FRANCE)).isEqualTo(text);
+    }
+  }
 
   private final FormattingConversionService conversionService = new DefaultFormattingConversionService();
 

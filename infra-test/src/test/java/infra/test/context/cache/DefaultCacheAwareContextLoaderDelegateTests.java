@@ -28,6 +28,7 @@ import infra.app.logging.LogLevel;
 import infra.app.logging.LoggingSystem;
 import infra.test.annotation.DirtiesContext.HierarchyMode;
 import infra.test.context.ContextLoadException;
+import infra.test.context.CacheAwareContextLoaderDelegate;
 import infra.test.context.ApplicationContextFailureProcessor;
 import infra.test.context.ContextLoader;
 import infra.test.context.MergedContextConfiguration;
@@ -45,6 +46,26 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class DefaultCacheAwareContextLoaderDelegateTests {
+
+  @Test
+  void customDelegateCanOmitOptionalCacheUsageOperations() {
+    var custom = new CacheAwareContextLoaderDelegate() {
+      @Override
+      public ApplicationContext loadContext(MergedContextConfiguration config) {
+        throw new AssertionError("Must not load context");
+      }
+
+      @Override
+      public void closeContext(MergedContextConfiguration config, HierarchyMode mode) {
+        throw new AssertionError("Must not close context");
+      }
+    };
+    var config = new MergedContextConfiguration(getClass(), null, null, null, mock(ContextLoader.class));
+    assertThat(custom.isContextLoaded(config)).isFalse();
+    custom.registerContextUsage(config, getClass());
+    custom.unregisterContextUsage(config, getClass());
+    assertThat(custom.isContextLoaded(config)).isFalse();
+  }
 
   private final DefaultContextCache cache = new DefaultContextCache();
 

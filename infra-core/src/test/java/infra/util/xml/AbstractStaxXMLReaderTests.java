@@ -28,6 +28,12 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.XMLReader;
+import org.xml.sax.DTDHandler;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.helpers.AttributesImpl;
 
@@ -38,6 +44,7 @@ import java.nio.charset.StandardCharsets;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -51,11 +58,14 @@ import infra.tests.MockitoUtils;
 import infra.tests.MockitoUtils.InvocationArgumentsAdapter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Arjen Poutsma
@@ -207,6 +217,72 @@ abstract class AbstractStaxXMLReaderTests {
   }
 
   protected abstract AbstractStaxXMLReader createStaxXmlReader(InputStream inputStream) throws XMLStreamException;
+
+  @Test
+  void saxFeatureAndHandlerContracts() throws Exception {
+    var reader = createStaxXmlReader(createTestInputStream());
+    var dtdHandler = mock(DTDHandler.class);
+    var resolver = mock(EntityResolver.class);
+    var lexical = mock(LexicalHandler.class);
+    var errorHandler = mock(ErrorHandler.class);
+    reader.setDTDHandler(dtdHandler);
+    reader.setEntityResolver(resolver);
+    reader.setErrorHandler(errorHandler);
+    reader.setProperty("http://xml.org/sax/properties/lexical-handler", lexical);
+    assertThat(reader.getDTDHandler()).isSameAs(dtdHandler);
+    assertThat(reader.getEntityResolver()).isSameAs(resolver);
+    assertThat(reader.getErrorHandler()).isSameAs(errorHandler);
+    assertThat(reader.getProperty("http://xml.org/sax/properties/lexical-handler")).isSameAs(lexical);
+
+    String features = "http://xml.org/sax/features/";
+    assertThat(reader.getFeature(features + "namespaces")).isTrue();
+    assertThat(reader.getFeature(features + "namespace-prefixes")).isFalse();
+    assertThatExceptionOfType(SAXNotSupportedException.class).isThrownBy(() -> reader.getFeature(features + "is-standalone"));
+    reader.setStandalone(true);
+    assertThat(reader.getFeature(features + "is-standalone")).isTrue();
+    assertThat(reader.getFeature(features + "unknown")).isFalse();
+    reader.setFeature(features + "unknown", false);
+    assertThatExceptionOfType(SAXNotSupportedException.class).isThrownBy(() -> reader.setFeature(features + "unknown", true));
+    assertThatExceptionOfType(SAXNotRecognizedException.class).isThrownBy(() -> reader.getFeature("unknown"));
+    assertThatExceptionOfType(SAXNotRecognizedException.class).isThrownBy(() -> reader.setFeature("unknown", false));
+    assertThatExceptionOfType(SAXNotRecognizedException.class).isThrownBy(() -> reader.getProperty("unknown"));
+    assertThatExceptionOfType(SAXNotRecognizedException.class).isThrownBy(() -> reader.setProperty("unknown", lexical));
+  }
+
+  @Test
+  void staxFailurePreservesLocationAndNotifiesErrorHandler() throws Exception {
+    var location = mock(Location.class);
+    given(location.getPublicId()).willReturn("sample-public-id");
+    given(location.getSystemId()).willReturn("sample.xml");
+    given(location.getLineNumber()).willReturn(4);
+    given(location.getColumnNumber()).willReturn(7);
+    var failure = new XMLStreamException("Invalid XML", location);
+    var reader = new AbstractStaxXMLReader() {
+      @Override
+      protected void parseInternal() throws XMLStreamException {
+        throw failure;
+      }
+    };
+    assertThatExceptionOfType(SAXParseException.class).isThrownBy(() -> reader.parse("ignored"))
+            .satisfies(exception -> {
+              assertThat(exception.getException()).isSameAs(failure);
+              assertThat(exception.getPublicId()).isEqualTo("sample-public-id");
+              assertThat(exception.getSystemId()).isEqualTo("sample.xml");
+              assertThat(exception.getLineNumber()).isEqualTo(4);
+              assertThat(exception.getColumnNumber()).isEqualTo(7);
+            });
+    var handler = mock(ErrorHandler.class);
+    reader.setErrorHandler(handler);
+    reader.parse(new InputSource());
+    verify(handler).fatalError(any(SAXParseException.class));
+    var contentHandler = mock(ContentHandler.class);
+    reader.setContentHandler(contentHandler);
+    reader.startPrefixMapping(null, "urn:sample");
+    reader.startPrefixMapping(null, "urn:sample");
+    reader.endPrefixMapping("");
+    verify(contentHandler).startPrefixMapping("", "urn:sample");
+    verify(contentHandler).endPrefixMapping("");
+  }
 
   private static class SkipLocatorArgumentsAdapter implements InvocationArgumentsAdapter {
 

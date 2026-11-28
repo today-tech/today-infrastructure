@@ -18,19 +18,26 @@
 
 package infra.test.web.reactive.server;
 
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import java.time.Duration;
 
 import infra.http.HttpHeaders;
-
+import infra.http.ResponseCookie;
 import infra.http.reactive.client.ClientHttpConnector;
+import infra.util.LinkedMultiValueMap;
 import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link DefaultWebTestClient}.
@@ -39,6 +46,34 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
  * @since 5.0
  */
 class DefaultWebTestClientTests {
+
+  @Test
+  void cookieMatchersCheckResponseAttributesAndUseDiagnostics() {
+    var result = mock(ExchangeResult.class);
+    var response = mock(WebTestClient.ResponseSpec.class);
+    var cookies = new LinkedMultiValueMap<String, ResponseCookie>();
+    cookies.add("session", ResponseCookie.builder("session", "sample").path("/app").domain("example.org")
+            .maxAge(Duration.ofSeconds(30)).build());
+    given(result.getResponseCookies()).willReturn(cookies);
+    willAnswer(invocation -> {
+      invocation.<Runnable>getArgument(0).run();
+      return null;
+    }).given(result).assertWithDiagnostics(any(Runnable.class));
+    var assertions = new CookieAssertions(result, response);
+
+    Matcher<String> textMatcher = mock();
+    Matcher<Long> ageMatcher = mock();
+    given(textMatcher.matches(any())).willReturn(true);
+    given(ageMatcher.matches(any())).willReturn(true);
+    assertThat(assertions.value("session", textMatcher)).isSameAs(response);
+    assertThat(assertions.path("session", textMatcher)).isSameAs(response);
+    assertThat(assertions.domain("session", textMatcher)).isSameAs(response);
+    assertThat(assertions.maxAge("session", ageMatcher)).isSameAs(response);
+    then(textMatcher).should().matches("sample");
+    then(textMatcher).should().matches("/app");
+    then(textMatcher).should().matches("example.org");
+    then(ageMatcher).should().matches(30L);
+  }
 
   @Test
   void mutateDoesNotShareDefaultHeaderAndCookieValues() {

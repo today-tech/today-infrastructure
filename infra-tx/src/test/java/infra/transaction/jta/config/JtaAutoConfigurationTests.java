@@ -85,6 +85,7 @@ class JtaAutoConfigurationTests {
   void transactionManagerFromJndi(JndiEntry jndiEntry, InitialContext initialContext) throws NamingException {
     jndiEntry.register(initialContext);
     this.context = new AnnotationConfigApplicationContext(JtaAutoConfiguration.class);
+    assertThat(this.context.getBean(JtaAutoConfiguration.class)).isNotNull();
     JtaTransactionManager transactionManager = this.context.getBean(JtaTransactionManager.class);
     if (jndiEntry.value instanceof UserTransaction) {
       assertThat(transactionManager.getUserTransaction()).isEqualTo(jndiEntry.value);

@@ -62,6 +62,40 @@ import static org.mockito.Mockito.verify;
  */
 class TypeHandlerTests {
 
+  @Test
+  void enumHandlerUsesNamesAndPreservesSqlNull() throws SQLException {
+    var handler = new EnumTypeHandler<>(Month.class);
+    var statement = mock(PreparedStatement.class);
+    var callable = mock(CallableStatement.class);
+    handler.setParameter(statement, 1, Month.JANUARY);
+    verify(statement).setString(1, "JANUARY");
+    given(resultSet.getString(1)).willReturn("JANUARY", (String) null);
+    given(resultSet.getString("month")).willReturn("FEBRUARY", (String) null);
+    given(callable.getString(1)).willReturn("MARCH", (String) null);
+    assertThat(handler.getResult(resultSet, 1)).isEqualTo(Month.JANUARY);
+    assertThat(handler.getResult(resultSet, 1)).isNull();
+    assertThat(handler.getResult(resultSet, "month")).isEqualTo(Month.FEBRUARY);
+    assertThat(handler.getResult(resultSet, "month")).isNull();
+    assertThat(handler.getResult(callable, 1)).isEqualTo(Month.MARCH);
+    assertThat(handler.getResult(callable, 1)).isNull();
+  }
+
+  @Test
+  void wrappedTypeHandlerRejectsReadingWithoutTarget() {
+    WrappedTypeHandler<StringBuilder> handler = new WrappedTypeHandler<>() {
+      @Override
+      public void applyResult(StringBuilder wrapped, ResultSet rs, int columnIndex) throws SQLException {
+        wrapped.append(rs.getString(columnIndex));
+      }
+
+      @Override
+      public void setParameter(PreparedStatement ps, int parameterIndex, @Nullable StringBuilder argument) throws SQLException {
+        ps.setString(parameterIndex, argument == null ? null : argument.toString());
+      }
+    };
+    assertThatThrownBy(() -> handler.getResult(resultSet, 1)).isInstanceOf(UnsupportedOperationException.class);
+  }
+
   protected final ResultSet resultSet = mock(ResultSet.class);
 
   protected final CallableStatement callableStatement = mock(CallableStatement.class);

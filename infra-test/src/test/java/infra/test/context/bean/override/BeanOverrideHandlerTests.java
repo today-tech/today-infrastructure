@@ -50,6 +50,16 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 class BeanOverrideHandlerTests {
 
   @Test
+  void fieldOnlyProcessorDeclinesTypeAndConstructorParameterOverrides() throws Exception {
+    Field field = field(SingleAnnotation.class, "message");
+    var annotation = field.getAnnotation(DummyBean.class);
+    var processor = new DummyBeanOverrideProcessor();
+    var parameter = String.class.getConstructor(String.class).getParameters()[0];
+    assertThat(processor.createHandlers(annotation, SingleAnnotation.class)).isEmpty();
+    assertThat(processor.createHandler(annotation, SingleAnnotation.class, parameter)).isNull();
+  }
+
+  @Test
   void forTestClassWithSingleField() {
     List<BeanOverrideHandler> handlers = BeanOverrideUtils.findHandlersForFields(SingleAnnotation.class);
     assertThat(handlers).singleElement().satisfies(hasBeanOverrideHandler(

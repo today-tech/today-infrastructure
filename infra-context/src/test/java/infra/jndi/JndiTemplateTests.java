@@ -38,6 +38,12 @@ import static org.mockito.Mockito.verify;
 public class JndiTemplateTests {
 
   @Test
+  void lookupFailureExceptionRetainsNamingException() {
+    var cause = new NameNotFoundException("missing");
+    assertThat(new JndiLookupFailureException("Lookup failed", cause)).hasMessage("Lookup failed").hasCause(cause);
+  }
+
+  @Test
   public void testLookupSucceeds() throws Exception {
     Object o = new Object();
     String name = "foo";
