@@ -1,6 +1,6 @@
 plugins {
   id 'java'
-  id 'cn.taketoday.application' version '{gradle-project-version}' apply false
+  id 'cn.infra-tech.application' version '{gradle-project-version}' apply false
 }
 
 // tag::configure-bom[]
@@ -16,7 +16,7 @@ dependencyManagement {
 dependencyManagement {
   resolutionStrategy {
     eachDependency {
-      if (it.requested.group == 'cn.taketoday') {
+      if (it.requested.group == 'cn.infra-tech') {
         it.useVersion 'TEST-SNAPSHOT'
       }
     }

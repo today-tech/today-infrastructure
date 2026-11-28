@@ -48,19 +48,13 @@ WARNING: 每个 Infra 版本都基于一组特定的第三方依赖进行设计�
 
 首先，将 Infra 插件声明为项目的依赖，但不要应用它：
 
-ifeval::["{artifact-release-type}" == "release"]
+ifeval::["{artifact-release-type}" != "snapshot"]
+对应版本通过 Gradle 插件门户审核后，可以使用下面的声明：
+
 [source,groovy,indent=0,subs="verbatim,attributes",role="primary"]
 .Groovy
 ----
 include::example$managing-dependencies/depend-on-plugin-release.gradle[]
-----
-
-endif::[]
-ifeval::["{artifact-release-type}" == "milestone"]
-[source,groovy,indent=0,subs="verbatim,attributes",role="primary"]
-.Groovy
-----
-include::example$managing-dependencies/depend-on-plugin-milestone.gradle[]
 ----
 
 endif::[]

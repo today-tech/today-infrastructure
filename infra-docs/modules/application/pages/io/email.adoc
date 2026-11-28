@@ -3,7 +3,7 @@
 
 TODAY INFRA 使用 `infra.mail.javamail.JavaMailSender` 抽象发送邮件，并提供相应自动配置。
 具体邮件 API 用法见 xref:ROOT:integration/email.adoc[邮件集成]。
-应用可以添加 `cn.taketoday:infra-starter-mail`，引入邮件模块及 Jakarta Mail 实现。
+应用可以添加 `cn.infra-tech:infra-starter-mail`，引入邮件模块及 Jakarta Mail 实现。
 
 当 `mail.host` 已配置，且类路径中存在邮件所需的类型时，自动配置在没有用户提供的 `infra.mail.MailSender` Bean 的情况下创建默认邮件发送器。
 `mail.jndi-name` 也可以触发自动配置。

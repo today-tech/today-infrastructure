@@ -7,7 +7,7 @@ TODAY INFRA 提供命令式 `infra.restclient.RestClient` 和响应式 `infra.we
 
 == 使用自动配置的 Builder
 
-分别通过 `cn.taketoday:infra-starter-restclient` 或 `cn.taketoday:infra-starter-webclient` 引入相应客户端集成。
+分别通过 `cn.infra-tech:infra-starter-restclient` 或 `cn.infra-tech:infra-starter-webclient` 引入相应客户端集成。
 自动配置提供原型作用域的 Builder，每个注入点获得独立实例。
 推荐注入 `RestClient.Builder` 或 `WebClient.Builder`，以保留自动配置的请求工厂、连接器、消息转换器或 Codec 设置。
 

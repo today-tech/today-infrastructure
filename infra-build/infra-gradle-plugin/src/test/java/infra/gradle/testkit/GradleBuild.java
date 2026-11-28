@@ -276,7 +276,7 @@ public class GradleBuild {
     if (!this.autoApplyPlugins) {
       allArguments.add("-PskipAutoApplyPlugins");
     }
-    allArguments.add("-Pinfra.dependencies=cn.taketoday:infra-dependencies:" + getInfraVersion());
+    allArguments.add("-Pinfra.dependencies=cn.infra-tech:infra-dependencies:" + getInfraVersion());
     allArguments.add("--stacktrace");
     allArguments.addAll(Arrays.asList(arguments));
     allArguments.add("--warning-mode");

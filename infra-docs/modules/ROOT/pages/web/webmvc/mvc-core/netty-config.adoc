@@ -11,7 +11,7 @@
 [source,groovy]
 ----
 dependencies {
-  implementation 'cn.taketoday:infra-starter-netty-server'
+  implementation 'cn.infra-tech:infra-starter-netty-server'
 }
 ----
 

@@ -32,7 +32,7 @@ generateAntoraYml {
     Version version = Version.parse(versionString)
     return [
         "infra-version"             : versionString,
-        "artifact-release-type"     : version.isSnapshot() ? 'snapshot' : version.isRelease() ? 'release' : version.type(),
+        "artifact-release-type"     : versionString.endsWith('-SNAPSHOT') ? 'snapshot' : version.isRelease() ? 'release' : version.type(),
         "native-build-tools-version": project.property('nativeBuildToolsVersion')
     ]
   })

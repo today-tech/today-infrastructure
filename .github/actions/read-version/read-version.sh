@@ -16,7 +16,7 @@ if [[ -z "$version" || "$version" =~ ^[[:space:]]*$ ]]; then
 fi
 
 snapshot=false
-if [[ "$version" == *SNAPSHOT ]]; then
+if [[ "$version" == *-SNAPSHOT ]]; then
   snapshot=true
 fi
 

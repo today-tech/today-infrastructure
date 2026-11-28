@@ -15,7 +15,7 @@ repositories {
 configurations.configureEach {
   resolutionStrategy {
     eachDependency {
-      if (it.requested.group == 'cn.taketoday') {
+      if (it.requested.group == 'cn.infra-tech') {
         it.useVersion 'TEST-SNAPSHOT'
       }
     }

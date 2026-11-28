@@ -157,7 +157,7 @@ class VersionTests {
 
   @Test
   void unknownTypesShouldFallbackToStringComparison() {
-    Version v1 = Version.parse("4.0.0-RC.1");
+    Version v1 = Version.parse("4.0.0-Preview.1");
     Version v2 = Version.parse("4.0.0-Nightly.1");
     assertThat(v1.compareTo(v2)).isPositive();
   }
@@ -233,6 +233,23 @@ class VersionTests {
 
     assertThat(Version.parse("4.0.0-Alpha.1").isPreRelease()).isTrue();
     assertThat(Version.parse("4.0.0").isPreRelease()).isFalse();
+  }
+
+  @Test
+  void releaseCandidatesAndPhaseSnapshotsFollowFrameworkOrdering() {
+    Version draftSnapshot = Version.parse("1.0-Draft.1-SNAPSHOT");
+    assertThat(draftSnapshot.isDraft()).isTrue();
+    assertThat(draftSnapshot.isSnapshot()).isTrue();
+    assertThat(draftSnapshot).isLessThan(Version.parse("1.0-Draft.1"));
+
+    Version releaseCandidateSnapshot = Version.parse("1.0-RC.2-SNAPSHOT");
+    assertThat(releaseCandidateSnapshot.isReleaseCandidate()).isTrue();
+    assertThat(releaseCandidateSnapshot.isSnapshot()).isTrue();
+    assertThat(releaseCandidateSnapshot.isRelease()).isFalse();
+    assertThat(releaseCandidateSnapshot).isGreaterThan(Version.parse("1.0-Beta.10"));
+    assertThat(releaseCandidateSnapshot).isGreaterThan(Version.parse("1.0-RC.1"));
+    assertThat(releaseCandidateSnapshot).isLessThan(Version.parse("1.0-RC.2"));
+    assertThat(Version.parse("1.0-RC.2")).isLessThan(Version.parse("1.0"));
   }
 
   @Test

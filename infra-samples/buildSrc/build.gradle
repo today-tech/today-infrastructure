@@ -3,6 +3,7 @@ plugins {
 }
 
 repositories {
+  mavenLocal()
   maven { url = "https://central.sonatype.com/repository/maven-snapshots/" }
   mavenCentral()
   gradlePluginPortal()
@@ -17,8 +18,7 @@ try (def reader = new FileReader(file("../../gradle.properties"))) {
 def infraVersion = properties['version']
 
 dependencies {
-  implementation(platform("cn.taketoday:infra-bom:$infraVersion"))
-  implementation "cn.taketoday:infra-core"
-  implementation "cn.taketoday:infra-gradle-plugin"
+  implementation(platform("cn.infra-tech:infra-bom:$infraVersion"))
+  implementation "cn.infra-tech:infra-core"
+  implementation "cn.infra-tech:infra-gradle-plugin"
 }
-

@@ -6,7 +6,7 @@
 [source,groovy,indent=0,subs="verbatim,quotes"]
 ----
 dependencies {
-  implementation("cn.taketoday:infra-persistence")
+  implementation("cn.infra-tech:infra-persistence")
 }
 ----
 

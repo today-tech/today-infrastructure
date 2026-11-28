@@ -10,7 +10,7 @@ dependencies {
 // end::configure-platform[]
 
 dependencies {
-  implementation "cn.taketoday:infra-starter"
+  implementation "cn.infra-tech:infra-starter"
 }
 
 repositories {
@@ -20,7 +20,7 @@ repositories {
 configurations.all {
   resolutionStrategy {
     eachDependency {
-      if (it.requested.group == 'cn.taketoday') {
+      if (it.requested.group == 'cn.infra-tech') {
         it.useVersion 'TEST-SNAPSHOT'
       }
     }

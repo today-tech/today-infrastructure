@@ -6,7 +6,7 @@ TODAY INFRA 提供 Docker Compose 与 Testcontainers 集成。
 
 == Docker Compose
 
-添加 `cn.taketoday:infra-docker-compose` 可以启用 Compose 支持。
+添加 `cn.infra-tech:infra-docker-compose` 可以启用 Compose 支持。
 使用应用 Gradle 插件时，把它声明在 `developmentOnly`，避免作为常规生产依赖打包。
 需要在测试中使用时可改为 `testAndDevelopmentOnly`，并设置 `docker.compose.skip.in-tests=false`。
 
@@ -45,7 +45,7 @@ Compose Profile 与 `infra.profiles.active` 是两个独立配置，不能认为
 Testcontainers 可以用 Java 配置代替 Compose YAML。
 在测试类路径中声明容器配置，并从测试目录的启动类运行应用，可以让容器依赖保持测试范围。
 `Application.from(MyApplication::main).with(MyContainersConfiguration.class).run(args)` 可以复用真实主入口并增加测试配置。
-需要添加 `cn.taketoday:infra-testcontainers` 及相应容器依赖。
+需要添加 `cn.infra-tech:infra-testcontainers` 及相应容器依赖。
 容器生命周期和服务连接限制见 xref:testing/testcontainers.adoc[]。
 
 目标没有上游 DevTools 的重启作用域能力；不要使用 `RestartScope` 或承诺应用自动重启时保留容器实例。
