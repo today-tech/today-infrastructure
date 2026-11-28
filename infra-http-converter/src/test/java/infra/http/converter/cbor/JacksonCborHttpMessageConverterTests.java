@@ -41,6 +41,12 @@ class JacksonCborHttpMessageConverterTests {
   private final CBORMapper mapper = CBORMapper.builder().build();
 
   @Test
+  void customMapperAndBuilderPreserveCborSupport() {
+    assertThat(new JacksonCborHttpMessageConverter(mapper).getMapper()).isSameAs(mapper);
+    assertThat(new JacksonCborHttpMessageConverter(CBORMapper.builder()).canWrite(MyBean.class, MediaType.APPLICATION_CBOR)).isTrue();
+  }
+
+  @Test
   void canRead() {
     assertThat(converter.canRead(MyBean.class, MediaType.APPLICATION_CBOR)).isTrue();
     assertThat(converter.canRead(MyBean.class, new MediaType("application", "json"))).isFalse();

@@ -3,8 +3,8 @@
 include::partial$attributes.adoc[]
 要开始使用此插件，需要先将其应用到项目中。
 
-ifeval::["{artifact-release-type}" == "release"]
-相应版本在 https://plugins.gradle.org/plugin/cn.taketoday.application[Gradle 插件门户]发布并通过审核后，即可使用 `plugins` 块应用此插件：
+ifeval::["{artifact-release-type}" != "snapshot"]
+相应版本在 https://plugins.gradle.org/plugin/cn.infra-tech.application[Gradle 插件门户]发布并通过审核后，即可使用 `plugins` 块应用此插件：
 [source,groovy,indent=0,subs="verbatim,attributes",role="primary"]
 .Groovy
 ----
@@ -13,9 +13,10 @@ include::example$getting-started/apply-plugin-release.gradle[]
 
 endif::[]
 
-插件门户中的 ID 为 `cn.taketoday.application`，包含可按需启用的 AOT 支持，不单独发布 AOT 插件 ID。
-Gradle 插件门户仅接收非快照版本，不提供 `cn.taketoday.application` 的快照版本。
-通过 `buildscript` 或 `buildSrc` 加载 `cn.taketoday:infra-gradle-plugin` 时，
+1.0 系列使用 `cn.infra-tech.application`。新 ID 在插件门户审核通过后可从门户解析；已发布的 5.0-Draft 版本仍使用 `cn.taketoday.application`。
+应用插件包含可按需启用的 AOT 支持，不单独发布 AOT 插件 ID。
+Gradle 插件门户仅接收非快照版本，不提供 `cn.infra-tech.application` 的快照版本。
+通过 `buildscript` 或 `buildSrc` 加载 `cn.infra-tech:infra-gradle-plugin` 时，
 仍可使用兼容 ID `infra.application`；独立的 `infra.application.aot` ID 已移除。
 请通过 `infraApplication.enableAheadOfTimeProcessing()` 启用 AOT，详见 xref:aot.adoc[AOT 配置入口]。
 
@@ -34,11 +35,11 @@ buildscript {
   }
 
   dependencies {
-    classpath 'cn.taketoday:infra-gradle-plugin:{infra-version}'
+    classpath 'cn.infra-tech:infra-gradle-plugin:{infra-version}'
   }
 }
 
-apply plugin: 'cn.taketoday.application'
+apply plugin: 'cn.infra-tech.application'
 ----
 
 endif::[]
@@ -47,13 +48,16 @@ endif::[]
 创建用于构建可执行 jar 的任务，并导入与当前 Infra 版本对应的 `infra-dependencies` BOM。
 无需重复应用依赖管理插件或手动导入同一个 BOM。
 使用 Groovy 或 Kotlin 时，还需按需应用 {groovy-plugin}[`groovy`] 或 {kotlin-plugin}[`org.jetbrains.kotlin.jvm`] 插件。
-例如：
+
+ifeval::["{artifact-release-type}" != "snapshot"]
+例如，插件门户可解析对应版本后，可以这样声明插件：
 
 [source,groovy,indent=0,subs="verbatim,attributes",role="primary"]
 .Groovy
 ----
 include::example$getting-started/typical-plugins.gradle[tags=apply]
 ----
+endif::[]
 
 如果需要自行控制插件的应用，可以在 `gradle.properties` 中设置 `skipAutoApplyPlugins=true`。
 插件根据该项目属性是否存在来判断是否跳过自动应用；即使将值设为 `false`，也会跳过自动应用。

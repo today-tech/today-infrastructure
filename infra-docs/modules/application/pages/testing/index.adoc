@@ -1,6 +1,6 @@
 = 应用测试支持
 
-`cn.taketoday:infra-starter-test` 提供应用测试常用依赖，应放在测试范围。
+`cn.infra-tech:infra-starter-test` 提供应用测试常用依赖，应放在测试范围。
 Gradle 使用 `testImplementation`，Maven 使用 `test` scope。
 它包括 JUnit Jupiter、infra 测试设施、AssertJ、Mockito、JSONassert、JsonPath、Awaitility 和 XMLUnit 等。
 Starter 当前也包含 Hamcrest，但本仓库测试约定使用 AssertJ 和 Mockito，示例遵循该约定。

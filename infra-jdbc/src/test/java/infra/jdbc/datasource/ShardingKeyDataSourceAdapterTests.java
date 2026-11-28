@@ -94,6 +94,15 @@ class ShardingKeyDataSourceAdapterTests {
   }
 
   @Test
+  void simpleKeyProviderDoesNotRequireSuperShardingKey() throws SQLException {
+    ShardingKeyProvider provider = () -> shardingKey;
+    var adapter = new ShardingKeyDataSourceAdapter(dataSource, provider);
+    when(connectionBuilder.shardingKey(shardingKey).superShardingKey(null)).thenReturn(shardConnectionBuilder);
+    when(shardConnectionBuilder.build()).thenReturn(shardConnection);
+    assertThat(adapter.getConnection()).isSameAs(shardConnection);
+  }
+
+  @Test
   void getConnectionWithCredentialsNoKeyProvider() throws SQLException {
     ShardingKeyDataSourceAdapter dataSourceAdapter = new ShardingKeyDataSourceAdapter(dataSource);
 

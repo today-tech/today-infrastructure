@@ -1,7 +1,7 @@
 // tag::apply[]
 plugins {
   id 'java'
-  id 'cn.taketoday.application' version '{gradle-project-version}'
+  id 'cn.infra-tech.application' version '{gradle-project-version}'
 }
 
 // end::apply[]

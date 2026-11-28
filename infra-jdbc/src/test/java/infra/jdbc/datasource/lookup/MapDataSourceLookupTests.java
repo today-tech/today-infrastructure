@@ -37,6 +37,15 @@ public class MapDataSourceLookupTests {
   private static final String DATA_SOURCE_NAME = "dataSource";
 
   @Test
+  void singleDataSourceLookupReturnsSameDataSourceForEveryName() {
+    var source = new StubDataSource();
+    var lookup = new SingleDataSourceLookup(source);
+    assertThat(lookup.getDataSource("first")).isSameAs(source);
+    assertThat(lookup.getDataSource("second")).isSameAs(source);
+    assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new SingleDataSourceLookup(null));
+  }
+
+  @Test
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public void getDataSourcesReturnsUnmodifiableMap() throws Exception {
     MapDataSourceLookup lookup = new MapDataSourceLookup();

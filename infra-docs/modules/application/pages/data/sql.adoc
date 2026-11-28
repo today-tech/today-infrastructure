@@ -2,7 +2,7 @@
 = SQL 数据库
 
 TODAY INFRA 提供 JDBC 访问，包括 `infra.jdbc.core.JdbcTemplate`、`infra.jdbc.core.simple.JdbcClient` 和事务支持。
-应用可以添加 `cn.taketoday:infra-starter-jdbc`，它引入 JDBC 集成及 HikariCP。
+应用可以添加 `cn.infra-tech:infra-starter-jdbc`，它引入 JDBC 集成及 HikariCP。
 数据库驱动仍需按实际数据库添加运行时依赖。
 基础 API 用法见 xref:ROOT:data-access/jdbc.adoc[JDBC]。
 

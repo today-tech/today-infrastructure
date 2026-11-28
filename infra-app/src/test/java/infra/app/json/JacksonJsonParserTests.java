@@ -24,10 +24,15 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
+import infra.util.Feature;
+import infra.util.FeatureDetector;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mockStatic;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link JacksonJsonParser}.
@@ -36,6 +41,19 @@ import static org.mockito.Mockito.spy;
  * @author Stephane Nicoll
  */
 class JacksonJsonParserTests extends AbstractJsonParserTests {
+
+  @Test
+  void lookupPrefersJacksonThenGsonThenBasicParser() {
+    try (var features = mockStatic(FeatureDetector.class)) {
+      features.when(() -> FeatureDetector.isPresent(Feature.JACKSON)).thenReturn(true);
+      features.when(() -> FeatureDetector.isPresent(Feature.GSON)).thenReturn(true);
+      assertThat(JsonParser.lookup()).isInstanceOf(JacksonJsonParser.class);
+      features.when(() -> FeatureDetector.isPresent(Feature.JACKSON)).thenReturn(false);
+      assertThat(JsonParser.lookup()).isInstanceOf(GsonJsonParser.class);
+      features.when(() -> FeatureDetector.isPresent(Feature.GSON)).thenReturn(false);
+      assertThat(JsonParser.lookup()).isInstanceOf(BasicJsonParser.class);
+    }
+  }
 
   @Override
   protected JsonParser getParser() {

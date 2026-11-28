@@ -29,13 +29,14 @@ import java.util.Objects;
  * {major}.{minor}.{patch}-{type}.{step}-{extension}
  * </pre>
  * where the {@code {type}} is one of {@link #Draft}, {@link #SNAPSHOT},
- * {@link #Alpha}, {@link #Beta} or {@link #RELEASE}. The {@code {patch}},
+ * {@link #Alpha}, {@link #Beta}, {@link #RC} or {@link #RELEASE}. The {@code {patch}},
  * {@code {step}} and {@code {extension}} parts are optional, and the extension
  * may itself contain hyphens.
  * <p>
  * Versions are ordered by major, minor and patch numbers first, then by type
- * precedence ({@code Draft < SNAPSHOT < Alpha < Beta < RELEASE}), and finally by
- * the step number.
+ * precedence ({@code Draft < SNAPSHOT < Alpha < Beta < RC < RELEASE}), then by
+ * the step number. Within the same phase and step, a snapshot precedes the
+ * corresponding non-snapshot version. This is not Maven or Gradle version ordering.
  * <p>
  * The static {@link #instance} is loaded from the "Implementation-Version"
  * manifest attribute of the jar file and can be obtained via {@link #get()}.
@@ -44,7 +45,7 @@ import java.util.Objects;
  * @param minor the minor version
  * @param patch the patch version
  * @param type the version type, one of {@link #Draft}, {@link #SNAPSHOT},
- * {@link #Alpha}, {@link #Beta} or {@link #RELEASE}
+ * {@link #Alpha}, {@link #Beta}, {@link #RC} or {@link #RELEASE}
  * @param step the version step
  * @param extension the version extension, may be {@code null}
  * @param implementationVersion the "Implementation-Version" manifest attribute
@@ -70,6 +71,11 @@ public record Version(int major, int minor, int patch, String type, int step,
   public static final String Beta = "Beta";
 
   /**
+   * The release candidate version type.
+   */
+  public static final String RC = "RC";
+
+  /**
    * The final, stable {@code RELEASE} version type.
    */
   public static final String RELEASE = "RELEASE";
@@ -87,9 +93,9 @@ public record Version(int major, int minor, int patch, String type, int step,
 
   /**
    * Version type precedence, from the least to the most stable:
-   * {@code Draft < SNAPSHOT < Alpha < Beta < RELEASE}.
+   * {@code Draft < SNAPSHOT < Alpha < Beta < RC < RELEASE}.
    */
-  private static final List<String> TYPE_PRECEDENCE = List.of(Draft, SNAPSHOT, Alpha, Beta, RELEASE);
+  private static final List<String> TYPE_PRECEDENCE = List.of(Draft, SNAPSHOT, Alpha, Beta, RC, RELEASE);
 
   static {
     String implementationVersion = VersionExtractor.forClass(Version.class);
@@ -165,16 +171,18 @@ public record Version(int major, int minor, int patch, String type, int step,
    * @return {@code true} if this version is a release, {@code false} otherwise
    */
   public boolean isRelease() {
-    return RELEASE.equals(type);
+    return RELEASE.equals(type) && !isSnapshot();
   }
 
   /**
-   * Return whether this version is a SNAPSHOT version.
+   * Return whether this is an unqualified snapshot or ends in {@code -SNAPSHOT}
+   * after a pre-release phase and optional extension.
    *
    * @return {@code true} if this version is a SNAPSHOT, {@code false} otherwise
    */
   public boolean isSnapshot() {
-    return SNAPSHOT.equals(type);
+    return SNAPSHOT.equals(type) || (extension != null
+            && (SNAPSHOT.equals(extension) || extension.endsWith("-" + SNAPSHOT)));
   }
 
   /**
@@ -193,6 +201,15 @@ public record Version(int major, int minor, int patch, String type, int step,
    */
   public boolean isBeta() {
     return Beta.equals(type);
+  }
+
+  /**
+   * Return whether this version is a release candidate, including snapshots
+   * of a release candidate.
+   * @return {@code true} if the version is in the RC phase
+   */
+  public boolean isReleaseCandidate() {
+    return RC.equals(type);
   }
 
   /**
@@ -341,7 +358,8 @@ public record Version(int major, int minor, int patch, String type, int step,
     }
 
     // Compare step
-    return Integer.compare(step, o.step);
+    result = Integer.compare(step, o.step);
+    return result != 0 ? result : Boolean.compare(o.isSnapshot(), isSnapshot());
   }
 
   private static int compareType(String type1, String type2) {

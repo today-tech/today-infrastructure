@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -45,10 +44,10 @@ import me.champeau.gradle.japicmp.JapicmpTask;
  * {@link Plugin} that applies the {@code "japicmp-gradle-plugin"}
  * and create tasks for all subprojects named {@code "infra-*"}, diffing the public API one by one
  * and creating the reports in {@code "build/reports/api-diff/$OLDVERSION_to_$NEWVERSION/"}.
- * <p>{@code "./gradlew apiDiff -PbaselineVersion=5.1.0.RELEASE"} will output the
+ * <p>{@code "./gradlew apiDiff -PbaselineVersion=5.0-Draft.9 -PbaselineGroup=cn.taketoday"} will output the
  * reports for the API diff between the baseline version and the current one for all modules.
  * You can limit the report to a single module with
- * {@code "./gradlew :infra-core:apiDiff -PbaselineVersion=5.1.0.RELEASE"}.
+ * {@code "./gradlew :infra-core:apiDiff -PbaselineVersion=5.0-Draft.9 -PbaselineGroup=cn.taketoday"}.
  *
  * @author Brian Clozel
  * @author <a href="https://github.com/TAKETODAY">Harry Yang</a>
@@ -62,9 +61,9 @@ public class ApiDiffPlugin implements Plugin<Project> {
 
   private static final String BASELINE_VERSION_PROPERTY = "baselineVersion";
 
-  private static final List<String> PACKAGE_INCLUDES = Collections.singletonList("infra.*");
+  private static final String BASELINE_GROUP_PROPERTY = "baselineGroup";
 
-  private static final URI INFRA_MILESTONE_REPOSITORY = URI.create("https://repo.spring.io/milestone");
+  private static final List<String> PACKAGE_INCLUDES = Collections.singletonList("infra.*");
 
   @Override
   public void apply(Project project) {
@@ -86,10 +85,6 @@ public class ApiDiffPlugin implements Plugin<Project> {
 
   private void createApiDiffTask(String baselineVersion, Project project) {
     if (isProjectEligible(project)) {
-      // Add Infra Milestone repository for generating diffs against previous milestones
-      project.getRootProject()
-              .getRepositories()
-              .maven(mavenArtifactRepository -> mavenArtifactRepository.setUrl(INFRA_MILESTONE_REPOSITORY));
       JapicmpTask apiDiff = project.getTasks().create(TASK_NAME, JapicmpTask.class);
       apiDiff.setDescription("Generates an API diff report with japicmp");
       apiDiff.setGroup(JavaBasePlugin.DOCUMENTATION_GROUP);
@@ -117,8 +112,9 @@ public class ApiDiffPlugin implements Plugin<Project> {
   }
 
   private Configuration createBaselineConfiguration(String baselineVersion, Project project) {
-    String baseline = String.join(":",
-            project.getGroup().toString(), project.getName(), baselineVersion);
+    String baselineGroup = project.getProviders().gradleProperty(BASELINE_GROUP_PROPERTY)
+            .getOrElse(project.getGroup().toString());
+    String baseline = String.join(":", baselineGroup, project.getName(), baselineVersion);
     Dependency baselineDependency = project.getDependencies().create(baseline + "@jar");
     Configuration baselineConfiguration = project.getRootProject().getConfigurations().detachedConfiguration(baselineDependency);
     try {

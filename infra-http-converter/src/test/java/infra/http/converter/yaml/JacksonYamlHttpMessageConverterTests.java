@@ -41,6 +41,12 @@ class JacksonYamlHttpMessageConverterTests {
   private final YAMLMapper mapper = YAMLMapper.builder().build();
 
   @Test
+  void customMapperAndBuilderPreserveYamlSupport() {
+    assertThat(new JacksonYamlHttpMessageConverter(mapper).getMapper()).isSameAs(mapper);
+    assertThat(new JacksonYamlHttpMessageConverter(YAMLMapper.builder()).canWrite(MyBean.class, MediaType.APPLICATION_YAML)).isTrue();
+  }
+
+  @Test
   void canRead() {
     assertThat(converter.canRead(MyBean.class, MediaType.APPLICATION_YAML)).isTrue();
     assertThat(converter.canRead(MyBean.class, new MediaType("application", "json"))).isFalse();

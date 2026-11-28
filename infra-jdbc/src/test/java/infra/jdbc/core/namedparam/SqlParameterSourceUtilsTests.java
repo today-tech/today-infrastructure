@@ -26,11 +26,44 @@ import org.junit.jupiter.api.Test;
 import infra.beans.testfixture.beans.TestBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link SqlParameterSourceUtils}.
  */
 class SqlParameterSourceUtilsTests {
+
+  @Test
+  void minimalParameterSourceUsesUnspecifiedMetadata() {
+    SqlParameterSource source = new SqlParameterSource() {
+      @Override
+      public boolean hasValue(String name) {
+        return "sample".equals(name);
+      }
+
+      @Override
+      public Object getValue(String name) {
+        if (!hasValue(name)) {
+          throw new IllegalArgumentException(name);
+        }
+        return "value";
+      }
+    };
+    assertThat(source.getValue("sample")).isEqualTo("value");
+    assertThat(source.getSqlType("sample")).isEqualTo(SqlParameterSource.TYPE_UNKNOWN);
+    assertThat(source.getTypeName("sample")).isNull();
+    assertThat(source.getParameterNames()).isNull();
+  }
+
+  @Test
+  void emptyParameterSourceHasNoValuesOrMetadata() {
+    var source = EmptySqlParameterSource.INSTANCE;
+    assertThat(source.hasValue("sample")).isFalse();
+    assertThatIllegalArgumentException().isThrownBy(() -> source.getValue("sample"));
+    assertThat(source.getSqlType("sample")).isEqualTo(SqlParameterSource.TYPE_UNKNOWN);
+    assertThat(source.getTypeName("sample")).isNull();
+    assertThat(source.getParameterNames()).isNull();
+  }
 
   @Test
   void createBatchWithMapBeanAndSqlParameterSource() {

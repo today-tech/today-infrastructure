@@ -51,6 +51,22 @@ public class ExchangeFilterFunctionsTests {
   private static final URI DEFAULT_URL = URI.create("https://example.com");
 
   @Test
+  void exchangeFunctionFilterDecoratesResponse() {
+    var request = ClientRequest.create(HttpMethod.GET, DEFAULT_URL).build();
+    var original = Mockito.mock(ClientResponse.class);
+    var replacement = Mockito.mock(ClientResponse.class);
+    ExchangeFunction exchange = actual -> {
+      assertThat(actual).isSameAs(request);
+      return Mono.just(original);
+    };
+    var filtered = exchange.filter((actual, next) -> next.exchange(actual).map(response -> {
+      assertThat(response).isSameAs(original);
+      return replacement;
+    }));
+    StepVerifier.create(filtered.exchange(request)).expectNext(replacement).verifyComplete();
+  }
+
+  @Test
   public void andThen() {
     ClientRequest request = ClientRequest.create(HttpMethod.GET, DEFAULT_URL).build();
     ClientResponse response = Mockito.mock(ClientResponse.class);

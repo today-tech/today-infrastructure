@@ -27,12 +27,15 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import infra.dao.DataAccessException;
 import infra.jdbc.GeneratedKeysException;
 import infra.jdbc.RepositoryManager;
 import infra.jdbc.datasource.DriverManagerDataSource;
 import infra.persistence.EntityMetadata;
+import infra.persistence.EntityManager;
+import infra.persistence.ScrollPageable;
 import infra.persistence.EntityProperty;
 import infra.persistence.PropertyUpdateStrategy;
 import infra.persistence.annotation.GeneratedId;
@@ -58,6 +61,27 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class BatchPersistTests {
+
+  @Test
+  void streamPersistenceDelegatesToBatchOperations() {
+    EntityManager entityManager = manager;
+    assertThat(entityManager.persist(Stream.of(item("first")))).isOne();
+    assertThat(entityManager.persist(Stream.of(item("second")), (entity, property) -> property.getName().equals("name"))).isOne();
+  }
+
+  @Test
+  void defaultPaginationOverloadsSelectAllRowsOrUseTheExample() {
+    EntityManager entityManager = manager;
+    entityManager.persist(item("first"));
+    entityManager.persist(item("second"));
+    Item example = item("second");
+    var pageable = ScrollPageable.of(10);
+    assertThat(entityManager.slice(Item.class, null).rows()).hasSize(2);
+    assertThat(entityManager.slice(example, null).rows()).extracting(entry -> entry.name).containsExactly("second");
+    assertThat(entityManager.scroll(Item.class, pageable).rows()).hasSize(2);
+    assertThat(entityManager.scroll(example, pageable).rows()).extracting(entry -> entry.name).containsExactly("second");
+    assertThat(entityManager.updateById(List.of())).isZero();
+  }
 
   RepositoryManager repository;
   RecordingManager manager;
@@ -393,10 +417,17 @@ class BatchPersistTests {
   }
 
   @Test
+  void deleteListenerCanLeaveAllCallbacksAtTheirDefaults() {
+    manager.getEntityEventRegistry().addListener(new DeleteEventListener<Item>() { });
+    assertThat(manager.delete(Item.class, 42L)).isZero();
+  }
+
+  @Test
   void deletePreFailuresPreserveOriginalExceptionAndContinueFailureNotifications() {
     IllegalStateException failure = new IllegalStateException("pre delete failed");
     IllegalStateException secondary = new IllegalStateException("failure listener failed");
     var failures = new ArrayList<EntityFailureContext>();
+    manager.getEntityEventRegistry().addListener(new DeleteEventListener<Item>() { });
     manager.getEntityEventRegistry().addListener(new DeleteEventListener<Item>() {
       @Override
       public void onPreDelete(Item entity, Object id, EntityMetadata metadata) {

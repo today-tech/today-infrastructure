@@ -35,6 +35,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.rsocket.Payload;
+import io.rsocket.core.RSocketClient;
 import io.rsocket.metadata.WellKnownMimeType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,6 +45,10 @@ import static infra.util.MimeType.TEXT_PLAIN;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * Tests for {@link DefaultRSocketRequester}.
@@ -59,6 +64,19 @@ class DefaultRSocketRequesterTests {
   private final TestRSocket rsocket = new TestRSocket();
 
   private final RSocketRequester requester = RSocketRequester.wrap(this.rsocket, TEXT_PLAIN, TEXT_PLAIN, this.strategies);
+
+  @Test
+  void defaultLifecycleMethodsDelegateToRSocketClient() {
+    var requester = mock(RSocketRequester.class, CALLS_REAL_METHODS);
+    var client = mock(RSocketClient.class);
+    given(requester.rsocketClient()).willReturn(client);
+    given(client.isDisposed()).willReturn(false, true);
+    assertThat(requester.isDisposed()).isFalse();
+    requester.dispose();
+    verify(client).dispose();
+    assertThat(requester.isDisposed()).isTrue();
+    assertThat(RSocketRequester.builder()).isNotNull();
+  }
 
   @Test
   void sendMono() {

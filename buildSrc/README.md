@@ -30,9 +30,11 @@ there is no need for checking out a specific tag. The plugin will fetch the JARs
 current working version with. You can generate the reports for all modules or a single module:
 
 ```
-./gradlew apiDiff -PbaselineVersion=5.1.0.RELEASE
-./gradlew :infra-core:apiDiff -PbaselineVersion=5.1.0.RELEASE
+./gradlew apiDiff -PbaselineVersion=5.0-Draft.9 -PbaselineGroup=cn.taketoday
+./gradlew :infra-core:apiDiff -PbaselineVersion=5.0-Draft.9 -PbaselineGroup=cn.taketoday
 ```      
+
+Omit `baselineGroup` when comparing against a version published under the current Maven group.
 
 The reports are located under `build/reports/api-diff/$OLDVERSION_to_$NEWVERSION/`.
 

@@ -29,14 +29,20 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import infra.cache.interceptor.CacheEvictOperation;
 import infra.cache.interceptor.CacheOperation;
+import infra.cache.interceptor.CacheOperationSource;
 import infra.cache.interceptor.CacheableOperation;
 import infra.core.annotation.AliasFor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Costin Leau
@@ -46,6 +52,58 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 public class AnnotationCacheOperationSourceTests {
 
   private final AnnotationCacheOperationSource source = new AnnotationCacheOperationSource();
+
+  @Test
+  void customParsersCanSupplyMultipleOperations() throws Exception {
+    var method = AnnotatedClass.class.getMethod("singular");
+    var first = mock(CacheAnnotationParser.class);
+    var second = mock(CacheAnnotationParser.class);
+    var absent = mock(CacheAnnotationParser.class);
+    var operation1 = mock(CacheOperation.class);
+    var operation2 = mock(CacheOperation.class);
+    given(first.isCandidateClass(AnnotatedClass.class)).willReturn(true);
+    given(first.parseCacheAnnotations(method)).willReturn(List.of(operation1));
+    given(second.parseCacheAnnotations(method)).willReturn(List.of(operation2));
+    given(first.parseCacheAnnotations(String.class)).willReturn(null);
+    given(second.parseCacheAnnotations(String.class)).willReturn(null);
+    given(absent.parseCacheAnnotations(String.class)).willReturn(null);
+    var combined = new AnnotationCacheOperationSource(first, second, absent);
+    assertThat(combined.isCandidateClass(AnnotatedClass.class)).isTrue();
+    assertThat(combined.isCandidateClass(String.class)).isFalse();
+    assertThat(combined.findCacheOperations(method)).containsExactlyInAnyOrder(operation1, operation2);
+    assertThat(combined.findCacheOperations(String.class)).isNull();
+    assertThat(new AnnotationCacheOperationSource(Set.of(first, second, absent))).isEqualTo(combined).hasSameHashCodeAs(combined);
+    assertThat(new AnnotationCacheOperationSource(first)).isNotEqualTo(combined);
+    assertThat(combined.equals(combined)).isTrue();
+    assertThat(combined).isNotEqualTo("other");
+    assertThat(new AnnotationCacheOperationSource(false)).isNotEqualTo(source);
+    assertThat(new AnnotationCacheOperationSource(false).allowPublicMethodsOnly()).isFalse();
+    assertThatIllegalArgumentException().isThrownBy(() -> new AnnotationCacheOperationSource((CacheAnnotationParser) null));
+    assertThatIllegalArgumentException().isThrownBy(() -> new AnnotationCacheOperationSource(new CacheAnnotationParser[0]));
+    assertThatIllegalArgumentException().isThrownBy(() -> new AnnotationCacheOperationSource(Set.of()));
+  }
+
+  @Test
+  void defaultParserAndSourceContracts() throws Exception {
+    CacheAnnotationParser parser = new CacheAnnotationParser() {
+      @Override
+      public Collection<CacheOperation> parseCacheAnnotations(Class<?> type) {
+        return null;
+      }
+
+      @Override
+      public Collection<CacheOperation> parseCacheAnnotations(Method method) {
+        return List.of();
+      }
+    };
+    assertThat(parser.isCandidateClass(String.class)).isTrue();
+    var method = String.class.getMethod("length");
+    CacheOperationSource empty = (m, type) -> parser.parseCacheAnnotations(m);
+    CacheOperationSource present = (m, type) -> List.of(mock(CacheOperation.class));
+    assertThat(empty.isCandidateClass(String.class)).isTrue();
+    assertThat(empty.hasCacheOperations(method, String.class)).isFalse();
+    assertThat(present.hasCacheOperations(method, String.class)).isTrue();
+  }
 
   @Test
   public void singularAnnotation() {

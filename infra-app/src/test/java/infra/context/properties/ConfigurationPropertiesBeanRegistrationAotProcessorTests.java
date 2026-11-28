@@ -21,8 +21,10 @@ package infra.context.properties;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import infra.aot.generate.GeneratedFiles.Kind;
 import infra.aot.test.generate.TestGenerationContext;
 import infra.beans.factory.aot.AotServices;
 import infra.beans.factory.aot.BeanRegistrationAotContribution;
@@ -55,6 +57,23 @@ class ConfigurationPropertiesBeanRegistrationAotProcessorTests {
   private final StandardBeanFactory beanFactory = new StandardBeanFactory();
 
   private final ConfigurationPropertiesBeanRegistrationAotProcessor processor = new ConfigurationPropertiesBeanRegistrationAotProcessor();
+
+  @Test
+  void valueObjectRegistrationGeneratesConstructorBindingSupplier() throws Exception {
+    var generationContext = new TestGenerationContext(TestTarget.class);
+    try (var context = createContext(ValueObjectSampleBeanConfiguration.class)) {
+      new ApplicationContextAotGenerator().processAheadOfTime(context, generationContext);
+    }
+    generationContext.writeGeneratedContent();
+
+    var files = generationContext.getGeneratedFiles();
+    var sources = new ArrayList<String>();
+    for (String path : files.getGeneratedFiles(Kind.SOURCE).keySet()) {
+      sources.add(files.getGeneratedFileContent(Kind.SOURCE, path));
+    }
+    assertThat(sources).anySatisfy(source -> assertThat(source)
+            .contains("ConstructorBound.from(beanFactory, beanName, beanClass)", "InstanceSupplier.of("));
+  }
 
   @Test
   void configurationPropertiesBeanRegistrationAotProcessorIsRegistered() {

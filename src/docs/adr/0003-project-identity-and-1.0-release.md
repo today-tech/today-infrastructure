@@ -110,7 +110,7 @@ Draft → Alpha → Beta → RC（可选）→ Release
 
 预发布序号从 1 开始，按数值递增，固定使用上述大小写及点号格式。已发布的 Draft、Alpha、Beta、RC 工件与稳定版一样不可覆盖。`SNAPSHOT` 是构建状态，可与阶段组合，例如 `1.0-Alpha.1-SNAPSHOT`。不能把上述成熟度顺序直接当作 Maven 或 Gradle 的版本比较顺序；例如 Maven 对同一基础版本的标准限定词排序是 `alpha < beta < milestone < rc < snapshot < release`，而非标准限定词 `Draft` 可能排在稳定版本之后。因此 Draft 主要用于早期研发，若发布 Draft 工件，应使用明确的版本号，并验证依赖解析行为，不依赖动态版本选择来推断成熟度。
 
-现有 `infra.lang.Version` 已支持 `Draft.N`、`Alpha.N`、`Beta.N`，但没有显式的 `RC` 类型，并且当前将 `SNAPSHOT` 排在 `Alpha` 之前。1.0 前需明确并验证版本解析、阶段判断、比较顺序以及带 `-SNAPSHOT` 后缀的版本语义，区分框架的成熟度顺序与构建工具的依赖版本排序，同时保留历史 `Draft` 格式的解析能力。构建中的非 SNAPSHOT 发布与正式稳定版本也应明确区分。
+`infra.lang.Version` 支持 `Draft.N`、`Alpha.N`、`Beta.N` 和 `RC.N`，并将阶段后的 `-SNAPSHOT` 识别为快照状态。同一阶段、同一序号的快照排在对应的非快照版本之前；无阶段的 `-SNAPSHOT` 保留历史排序（在 Draft 之后、Alpha 之前）。这是框架内的比较规则，不是 Maven 或 Gradle 的依赖版本排序。构建中的非 SNAPSHOT 版本仍可能是预发布版本，不等同于正式稳定版本。
 
 稳定版本采用语义化版本规则：补丁版本用于向后兼容的缺陷修复，次版本用于向后兼容的功能增强，主版本用于不兼容的公共契约变更。Git 发布标签继续采用 `v<版本号>`，例如 `v1.0`。
 
@@ -122,13 +122,13 @@ Draft → Alpha → Beta → RC（可选）→ Release
 
 - [ ] 在 Maven Central 单独注册并验证 `cn.infra-tech`，确认框架发布账号有权限；已验证的组织级 `cn.today-tech` 不覆盖这个命名空间。
 - [ ] 确认 Infra Tech Gradle 插件 ID 的发布权限、迁移时机及旧 ID 的兼容策略。
-- [ ] 将新版本的 Maven groupId、BOM、Starter、插件实现坐标及生成的发布元数据统一迁移，开启 `1.0-SNAPSHOT` 开发线。
+- [x] 将新开发线的 Maven groupId、BOM、Starter、插件实现坐标及生成的发布元数据切换至 `cn.infra-tech`；当前开发版本为 `1.0-Draft.1-SNAPSHOT`。
 - [ ] 核对构建脚本、`buildSrc`、依赖管理、集成测试、示例、README 和文档中使用的旧坐标，区分新版本引用与仍需解析的历史工件。
 - [ ] 将 Infra Tech 构建工具迁移到 `cn.infra-tech` 命名空间及 `infra.*` 包名；TODAY Infra Assistant 保持应用级 `cn.today-tech` 插件标识和 `cn.todaytech.assistant` 包名。
 - [ ] 验证新坐标下的 BOM、Starter、Maven/Gradle 插件及示例应用能正常解析和运行。
 - [ ] 确认 GitHub 仓库归属、官网入口与发布元数据中的项目链接。
 - [ ] 发布 1.0 迁移指南，说明旧坐标、版本及插件 ID 的变更；根据实际用户需求决定是否提供 Maven relocation POM。避免在同一应用中同时引入新旧坐标下包含相同 Java 类的工件。
 - [ ] 明确 1.0 的稳定性范围、兼容性承诺和发布验收条件。
-- [ ] 完善 `infra.lang.Version` 对新版本体系的支持，并核对 Maven、Gradle、发布脚本及文档的预发布版本处理规则。
+- [x] 为 `infra.lang.Version` 增加 RC 和阶段快照支持，区分非快照构建与稳定版本，并同步构建脚本及文档的快照判定。
 
 历史版本和 Git 标签保留原样，已经发布的 Maven 工件不重新发布或覆盖。各项实施任务可在 GitHub Issues 中跟踪，并引用本 ADR。

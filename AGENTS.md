@@ -1,6 +1,6 @@
 # TODAY Infrastructure
 
-Java 基础设施库，移植/演进自 Spring Framework（group `cn.taketoday`）。Gradle 多模块，JDK 17+（编译 toolchain 用 JDK 25，`--release 17`）。
+Java 基础设施库，移植/演进自 Spring Framework（Maven group `cn.infra-tech`，Java 包 `infra.*`）。Gradle 多模块，JDK 17+（编译 toolchain 用 JDK 25，`--release 17`）。
 
 ## 构建
 
@@ -51,11 +51,11 @@ Java 基础设施库，移植/演进自 Spring Framework（group `cn.taketoday`�
 - 学习/个人生产用项目（非商业产品），移植自 Spring，改动务必保留原始版权
 - Lombok 已配置（`lombok.config`，`@Data`/`@Slf4j` 可用，main 代码基本不用，多用于 test/sample）
 - `.run/` 目录有预配置的 IntelliJ 运行配置
-- 版本号在 `gradle.properties`（当前 `5.0-Draft.7-SNAPSHOT`）
+- 当前版本见 `gradle.properties`；坐标和 1.0 版本规则见 `src/docs/adr/0003-project-identity-and-1.0-release.md`。
 
 ## 发布标签
 
-- 发版 Git 标签统一使用 `v<版本号>`，例如 `v5.0-Draft.8`；`gradle.properties` 中的版本号保持 `5.0-Draft.8`，不带 `v`。
+- 发版 Git 标签统一使用 `v<版本号>`，例如 `v1.0-Alpha.1`；`gradle.properties` 中的版本号不带 `v`。
 - 创建、推送发布标签前，确认标签指向对应版本变更提交，并检查本地及远端是否已存在同名标签。
 
 ## 语言规则

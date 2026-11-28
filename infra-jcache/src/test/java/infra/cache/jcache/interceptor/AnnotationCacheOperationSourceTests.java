@@ -54,6 +54,17 @@ public class AnnotationCacheOperationSourceTests extends AbstractJCacheTests {
 
   private final StandardBeanFactory beanFactory = new StandardBeanFactory();
 
+  @Test
+  void customOperationSourceDefaultsToConsideringAllClasses() throws Exception {
+    var method = String.class.getMethod("length");
+    JCacheOperationSource absent = (m, type) -> null;
+    var operation = mock(JCacheOperation.class);
+    JCacheOperationSource present = (m, type) -> operation;
+    assertThat(absent.isCandidateClass(String.class)).isTrue();
+    assertThat(absent.hasCacheOperation(method, String.class)).isFalse();
+    assertThat(present.hasCacheOperation(method, String.class)).isTrue();
+  }
+
   @BeforeEach
   public void setup() {
     source.setCacheResolver(defaultCacheResolver);

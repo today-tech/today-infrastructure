@@ -32,6 +32,11 @@ import javax.xml.transform.URIResolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import infra.logging.Logger;
 
 /**
  * Unit tests for {@link TransformerUtils}.
@@ -40,6 +45,18 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
  * @author Arjen Poutsma
  */
 class TransformerUtilsTests {
+
+  @Test
+  void transformErrorListenerLogsRecoverableErrorsAndRethrowsFatalError() throws Exception {
+    var logger = mock(Logger.class);
+    var listener = new SimpleTransformErrorListener(logger);
+    var failure = new TransformerException("sample");
+    listener.warning(failure);
+    listener.error(failure);
+    verify(logger).warn("XSLT transformation warning", failure);
+    verify(logger).error("XSLT transformation error", failure);
+    assertThatThrownBy(() -> listener.fatalError(failure)).isSameAs(failure);
+  }
 
   @Test
   void enableIndentingSunnyDay() throws Exception {

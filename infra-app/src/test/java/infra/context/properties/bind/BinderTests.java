@@ -305,6 +305,18 @@ class BinderTests {
   }
 
   @Test
+  void bindOrCreateWhenHandlerDeclinesCreatedInstanceReportsFailure() {
+    assertThatExceptionOfType(BindException.class)
+            .isThrownBy(() -> this.binder.bindOrCreate("foo", Bindable.of(JavaBean.class), new BindHandler() {
+              @Override
+              public Object onCreate(ConfigurationPropertyName name, Bindable<?> target, BindContext context, Object result) {
+                return null;
+              }
+            }))
+            .withRootCauseInstanceOf(IllegalStateException.class);
+  }
+
+  @Test
   void bindToJavaBeanWhenHandlerOnStartReturnsNullShouldReturnUnbound() { // gh-18129
     this.sources.add(new MockConfigurationPropertySource("foo.value", "bar"));
     BindResult<JavaBean> result = this.binder.bind("foo", Bindable.of(JavaBean.class), new BindHandler() {

@@ -23,12 +23,15 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.chrono.JapaneseChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Locale;
 import java.util.TimeZone;
 
 import infra.format.annotation.DateTimeFormat.ISO;
+import infra.core.i18n.LocaleContextHolder;
+import infra.core.i18n.SimpleTimeZoneAwareLocaleContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,6 +40,30 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Sam Brannen
  */
 class DateTimeFormatterFactoryTests {
+
+  @Test
+  void dateTimeContextAppliesExplicitSettingsBeforeLocaleFallback() {
+    var context = new DateTimeContext();
+    var formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+    var previous = LocaleContextHolder.getLocaleContext();
+    try {
+      LocaleContextHolder.resetLocaleContext();
+      assertThat(context.getFormatter(formatter)).isSameAs(formatter);
+      LocaleContextHolder.setLocaleContext(new SimpleTimeZoneAwareLocaleContext(Locale.US, null));
+      assertThat(context.getFormatter(formatter)).isSameAs(formatter);
+      LocaleContextHolder.setLocaleContext(new SimpleTimeZoneAwareLocaleContext(Locale.US, ZURICH));
+      assertThat(context.getFormatter(formatter).getZone()).isEqualTo(ZURICH.toZoneId());
+      context.setTimeZone(NEW_YORK.toZoneId());
+      context.setChronology(JapaneseChronology.INSTANCE);
+      assertThat(context.getTimeZone()).isEqualTo(NEW_YORK.toZoneId());
+      assertThat(context.getChronology()).isSameAs(JapaneseChronology.INSTANCE);
+      assertThat(context.getFormatter(formatter).getZone()).isEqualTo(NEW_YORK.toZoneId());
+      assertThat(context.getFormatter(formatter).getChronology()).isSameAs(JapaneseChronology.INSTANCE);
+    }
+    finally {
+      LocaleContextHolder.setLocaleContext(previous);
+    }
+  }
 
   // Potential test timezone, both have daylight savings on October 21st
   private static final TimeZone ZURICH = TimeZone.getTimeZone("Europe/Zurich");

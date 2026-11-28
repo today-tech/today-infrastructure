@@ -63,6 +63,21 @@ public class DefaultLobHandlerTests {
   private LobCreator lobCreator = lobHandler.getLobCreator();
 
   @Test
+  void namedAccessorsResolveColumnIndexBeforeReading() throws SQLException {
+    given(rs.findColumn("content")).willReturn(3);
+    lobHandler.getBlobAsBytes(rs, "content");
+    lobHandler.getBlobAsBinaryStream(rs, "content");
+    lobHandler.getClobAsString(rs, "content");
+    lobHandler.getClobAsAsciiStream(rs, "content");
+    lobHandler.getClobAsCharacterStream(rs, "content");
+    verify(rs).getBytes(3);
+    verify(rs).getBinaryStream(3);
+    verify(rs).getString(3);
+    verify(rs).getAsciiStream(3);
+    verify(rs).getCharacterStream(3);
+  }
+
+  @Test
   public void testGetBlobAsBytes() throws SQLException {
     lobHandler.getBlobAsBytes(rs, 1);
     verify(rs).getBytes(1);

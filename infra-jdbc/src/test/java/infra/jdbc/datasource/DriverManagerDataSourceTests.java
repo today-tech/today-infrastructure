@@ -25,12 +25,28 @@ import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 
 /**
  * @author Rod Johnson
  */
 public class DriverManagerDataSourceTests {
+
+  @Test
+  void abstractDataSourceDefaultsAndWrapperContract() throws Exception {
+    var source = mock(AbstractDataSource.class, CALLS_REAL_METHODS);
+    assertThat(source.getLoginTimeout()).isZero();
+    assertThat(source.getParentLogger()).isEqualTo(java.util.logging.Logger.getGlobal());
+    assertThat(source.isWrapperFor(javax.sql.DataSource.class)).isTrue();
+    assertThat(source.isWrapperFor(String.class)).isFalse();
+    assertThat(source.unwrap(javax.sql.DataSource.class)).isSameAs(source);
+    assertThatThrownBy(() -> source.unwrap(String.class)).isInstanceOf(java.sql.SQLException.class);
+    assertThatThrownBy(() -> source.setLoginTimeout(1)).isInstanceOf(UnsupportedOperationException.class);
+    assertThatThrownBy(source::getLogWriter).isInstanceOf(UnsupportedOperationException.class);
+    assertThatThrownBy(() -> source.setLogWriter(null)).isInstanceOf(UnsupportedOperationException.class);
+  }
 
   private Connection connection = mock(Connection.class);
 

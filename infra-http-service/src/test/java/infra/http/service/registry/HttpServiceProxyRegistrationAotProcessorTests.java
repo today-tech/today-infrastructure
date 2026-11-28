@@ -18,8 +18,10 @@ package infra.http.service.registry;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.function.BiConsumer;
 
+import infra.aot.generate.GeneratedFiles.Kind;
 import infra.aot.test.generate.TestGenerationContext;
 import infra.beans.factory.aot.AotServices;
 import infra.beans.factory.aot.BeanRegistrationAotProcessor;
@@ -43,6 +45,29 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Stephane Nicoll
  */
 class HttpServiceProxyRegistrationAotProcessorTests {
+
+  @Test
+  void generatedProxySupplierLooksUpTheClientByGroupAndType() throws Exception {
+    var metadata = new GroupsMetadata();
+    metadata.getOrCreateGroup("echo", ClientType.REST_CLIENT).httpServiceTypeNames().add(EchoA.class.getName());
+    var beanFactory = prepareBeanFactory(metadata);
+    var definition = new RootBeanDefinition(EchoA.class);
+    definition.setAttribute(AbstractHttpServiceRegistrar.HTTP_SERVICE_GROUP_NAME_ATTRIBUTE, "echo");
+    beanFactory.registerBeanDefinition("echoA", definition);
+    var generationContext = new TestGenerationContext();
+    try (var context = new GenericApplicationContext(beanFactory)) {
+      new ApplicationContextAotGenerator().processAheadOfTime(context, generationContext);
+    }
+    generationContext.writeGeneratedContent();
+
+    var files = generationContext.getGeneratedFiles();
+    var generatedSources = new ArrayList<String>();
+    for (String path : files.getGeneratedFiles(Kind.SOURCE).keySet()) {
+      generatedSources.add(files.getGeneratedFileContent(Kind.SOURCE, path));
+    }
+    assertThat(generatedSources).anySatisfy(source -> assertThat(source)
+            .contains(".getClient(\"echo\", EchoA.class)", "InstanceSupplier.of("));
+  }
 
   @Test
   void httpServiceProxyBeanRegistrationAotProcessorIsRegistered() {

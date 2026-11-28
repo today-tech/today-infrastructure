@@ -50,7 +50,7 @@ public class JarModeLibrary extends Library {
 
   private static LibraryCoordinates createCoordinates(String artifactId) {
     String version = JarModeLibrary.class.getPackage().getImplementationVersion();
-    return LibraryCoordinates.of("cn.taketoday", artifactId, version);
+    return LibraryCoordinates.of("cn.infra-tech", artifactId, version);
   }
 
   private static String getJarName(LibraryCoordinates coordinates) {

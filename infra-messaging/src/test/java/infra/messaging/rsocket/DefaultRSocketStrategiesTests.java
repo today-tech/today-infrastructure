@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.util.function.Consumer;
 
 import infra.core.ReactiveAdapterRegistry;
+import infra.core.ResolvableType;
 import infra.core.codec.ByteArrayDecoder;
 import infra.core.codec.ByteArrayEncoder;
 import infra.core.codec.ByteBufferDecoder;
@@ -33,6 +34,7 @@ import infra.util.AntPathMatcher;
 import infra.util.SimpleRouteMatcher;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -45,6 +47,20 @@ import static org.mockito.Mockito.verify;
  * @since 5.0
  */
 class DefaultRSocketStrategiesTests {
+
+  @Test
+  void selectsCompatibleCodecsAndReportsUnsupportedTypes() {
+    var strategies = RSocketStrategies.create();
+    var strings = ResolvableType.forClass(String.class);
+    var unsupported = ResolvableType.forClass(Integer.class);
+    assertThat(strategies.encoder(strings, null)).isInstanceOf(CharSequenceEncoder.class);
+    assertThat(strategies.decoder(strings, null)).isInstanceOf(StringDecoder.class);
+    assertThatIllegalArgumentException().isThrownBy(() -> strategies.encoder(unsupported, null)).withMessageContaining("No encoder");
+    assertThatIllegalArgumentException().isThrownBy(() -> strategies.decoder(unsupported, null)).withMessageContaining("No decoder");
+    var copy = strategies.mutate().build();
+    assertThat(copy.encoders()).containsExactlyElementsOf(strategies.encoders());
+    assertThat(copy.decoders()).containsExactlyElementsOf(strategies.decoders());
+  }
 
   @Test
   void defaultSettings() {

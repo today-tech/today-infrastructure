@@ -100,6 +100,8 @@ cd today-infrastructure/infra-samples
 
 On Windows, use `gradlew.bat` instead of `./gradlew`. The first run downloads dependencies. The framework version is read from the repository's root `gradle.properties`, and artifacts are resolved through the configured Maven repositories.
 
+If the remote snapshot does not yet contain the plugin changes from the current checkout, run `./gradlew :infra-build:infra-gradle-plugin:publishToMavenLocal` from the repository root before running the sample. If the framework dependencies are not published either, run `./gradlew publishToMavenLocal` from the root first.
+
 Once the server starts, run in another terminal:
 
 ```bash
@@ -194,6 +196,8 @@ The skill is installed at `~/.config/opencode/skills/infra-app-dev` for [OpenCod
 
 ## Project setup
 
+The 1.0 development line uses the Maven group `cn.infra-tech`; Java packages remain under `infra.*`. Published 5.0-Draft artifacts keep `cn.taketoday`. When upgrading, switch the BOM, plugin, and starters together to avoid mixing the two sets of artifacts. The new Gradle plugin ID, `cn.infra-tech.application`, is available from the Plugin Portal only after the corresponding release is approved.
+
 The sample build provides a reference for Gradle integration:
 
 - [buildSrc/build.gradle](infra-samples/buildSrc/build.gradle): loads the framework BOM and Gradle plugin.
@@ -204,9 +208,9 @@ For a Web MVC application using Netty, the main starters are:
 
 ```groovy
 dependencies {
-  implementation 'cn.taketoday:infra-starter-application'
-  implementation 'cn.taketoday:infra-starter-webmvc'
-  implementation 'cn.taketoday:infra-starter-netty-server'
+  implementation 'cn.infra-tech:infra-starter-application'
+  implementation 'cn.infra-tech:infra-starter-webmvc'
+  implementation 'cn.infra-tech:infra-starter-netty-server'
 }
 ```
 

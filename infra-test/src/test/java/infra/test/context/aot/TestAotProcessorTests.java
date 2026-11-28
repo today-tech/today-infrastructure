@@ -38,8 +38,10 @@ import infra.test.context.aot.samples.basic.DisabledInAotProcessingTests;
 import infra.test.context.aot.samples.basic.DisabledInAotRuntimeClassLevelTests;
 import infra.test.context.aot.samples.basic.DisabledInAotRuntimeMethodLevelTests;
 import infra.util.ClassUtils;
+import infra.test.app.context.InfraTestAotProcessor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 /**
  * Tests for {@link TestAotProcessor}.
@@ -48,6 +50,25 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 4.0
  */
 class TestAotProcessorTests extends AbstractAotTests {
+
+  @Test
+  void commandLineProcessorRequiresAllArguments() {
+    assertThatIllegalArgumentException().isThrownBy(() -> InfraTestAotProcessor.main(new String[0]))
+            .withMessageContaining("<classpathRoots> <sourceOutput> <resourceOutput>");
+  }
+
+  @Test
+  void commandLineProcessorGeneratesArtifacts(@TempDir Path directory) throws Exception {
+    Path input = Files.createDirectories(directory.resolve("input"));
+    copy(BasicInfraJupiterTests.class, input);
+    Path sources = directory.resolve("sources");
+    Path resources = directory.resolve("resources");
+    Path classes = directory.resolve("classes");
+    InfraTestAotProcessor.main(new String[] { input.toString(), sources.toString(), resources.toString(),
+            classes.toString(), "org.example", "sample-tests" });
+    assertThat(sources).isDirectory();
+    assertThat(resources.resolve("META-INF/native-image/org.example/sample-tests/reachability-metadata.json")).exists();
+  }
 
   @Test
   void process(@TempDir(cleanup = CleanupMode.ON_SUCCESS) Path tempDir) throws Exception {
@@ -121,4 +142,3 @@ class TestAotProcessorTests extends AbstractAotTests {
   }
 
 }
-

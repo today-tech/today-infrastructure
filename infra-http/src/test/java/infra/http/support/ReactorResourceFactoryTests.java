@@ -41,6 +41,15 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  */
 class ReactorResourceFactoryTests {
 
+  @Test
+  void reactorNettyConfigurationRegistersResourceFactory() {
+    try (var context = new infra.context.annotation.AnnotationConfigApplicationContext(
+            ReactorNettyConfigurations.ReactorResourceFactoryConfiguration.class)) {
+      context.getBean(ReactorNettyConfigurations.ReactorResourceFactoryConfiguration.class);
+      assertThat(context.getBean(ReactorResourceFactory.class)).isNotNull();
+    }
+  }
+
   private final ReactorResourceFactory resourceFactory = new ReactorResourceFactory();
 
   private final ConnectionProvider connectionProvider = mock();
@@ -121,13 +130,15 @@ class ReactorResourceFactoryTests {
   void customShutdownDurations() {
     Duration quietPeriod = Duration.ofMillis(500);
     Duration shutdownTimeout = Duration.ofSeconds(1);
-    this.resourceFactory.setUseGlobalResources(false);
-    this.resourceFactory.setConnectionProviderSupplier(() -> this.connectionProvider);
-    this.resourceFactory.setLoopResourcesSupplier(() -> this.loopResources);
-    this.resourceFactory.setShutdownQuietPeriod(quietPeriod);
-    this.resourceFactory.setShutdownTimeout(shutdownTimeout);
-    this.resourceFactory.start();
-    this.resourceFactory.stop();
+    var properties = new ReactorNettyProperties();
+    properties.shutdownQuietPeriod = quietPeriod;
+    var factory = ReactorNettyConfigurations.ReactorResourceFactoryConfiguration.reactorResourceFactory(properties);
+    factory.setUseGlobalResources(false);
+    factory.setConnectionProviderSupplier(() -> this.connectionProvider);
+    factory.setLoopResourcesSupplier(() -> this.loopResources);
+    factory.setShutdownTimeout(shutdownTimeout);
+    factory.start();
+    factory.stop();
 
     verify(this.connectionProvider).disposeLater();
     verify(this.loopResources).disposeLater(eq(quietPeriod), eq(shutdownTimeout));

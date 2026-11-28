@@ -20,12 +20,32 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 
 /**
  * @author <a href="https://github.com/TAKETODAY">Harry Yang</a>
  * @since 5.0 2024/7/12 22:43
  */
 class EmptyMethodValidationResultTests {
+
+  @Test
+  void methodValidationExceptionExposesOriginalValidationResult() throws Exception {
+    var result = mock(MethodValidationResult.class);
+    var target = new Object();
+    var method = Object.class.getMethod("toString");
+    given(result.toString()).willReturn("Invalid return value");
+    given(result.getTarget()).willReturn(target);
+    given(result.getMethod()).willReturn(method);
+    given(result.isForReturnValue()).willReturn(true);
+    var exception = new MethodValidationException(result);
+    assertThat(exception).hasMessage("Invalid return value");
+    assertThat(exception.getTarget()).isSameAs(target);
+    assertThat(exception.getMethod()).isEqualTo(method);
+    assertThat(exception.isForReturnValue()).isTrue();
+    assertThat(exception.getParameterValidationResults()).isEmpty();
+    assertThat(exception.getCrossParameterValidationResults()).isEmpty();
+  }
 
   @Test
   void test() {

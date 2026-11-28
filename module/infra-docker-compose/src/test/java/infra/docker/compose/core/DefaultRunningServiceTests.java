@@ -38,6 +38,8 @@ import infra.util.FileCopyUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link DefaultRunningService}.
@@ -47,6 +49,11 @@ import static org.assertj.core.api.Assertions.entry;
  * @author Phillip Webb
  */
 class DefaultRunningServiceTests {
+
+  @Test
+  void customRunningServiceDoesNotRequireComposeFile() {
+    assertThat(mock(RunningService.class, CALLS_REAL_METHODS).composeFile()).isNull();
+  }
 
   @TempDir
   @SuppressWarnings("NullAway.Init")

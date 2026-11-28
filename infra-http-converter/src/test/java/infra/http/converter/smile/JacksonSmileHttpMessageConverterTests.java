@@ -42,6 +42,13 @@ class JacksonSmileHttpMessageConverterTests {
   private final SmileMapper mapper = SmileMapper.builder().build();
 
   @Test
+  void customMapperAndBuilderPreserveSmileSupport() {
+    assertThat(new JacksonSmileHttpMessageConverter(mapper).getMapper()).isSameAs(mapper);
+    assertThat(new JacksonSmileHttpMessageConverter(SmileMapper.builder()).canWrite(MyBean.class,
+            new MediaType("application", "x-jackson-smile"))).isTrue();
+  }
+
+  @Test
   void canRead() {
     assertThat(converter.canRead(MyBean.class, new MediaType("application", "x-jackson-smile"))).isTrue();
     assertThat(converter.canRead(MyBean.class, new MediaType("application", "json"))).isFalse();

@@ -31,6 +31,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VirtualThreadTaskExecutorTests {
 
   @Test
+  void exposedThreadFactoryCreatesVirtualThreadsWithConfiguredPrefix() {
+    var executor = new VirtualThreadTaskExecutor("worker-");
+    var thread = executor.getVirtualThreadFactory().newThread(() -> { });
+    assertThat(thread.isVirtual()).isTrue();
+    assertThat(thread.getName()).isEqualTo("worker-0");
+    assertThat(thread.getState()).isEqualTo(Thread.State.NEW);
+  }
+
+  @Test
   void virtualThreadsWithoutName() {
     final Object monitor = new Object();
     VirtualThreadTaskExecutor executor = new VirtualThreadTaskExecutor();

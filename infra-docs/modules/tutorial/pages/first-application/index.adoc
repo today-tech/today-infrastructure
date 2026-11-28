@@ -1,86 +1,207 @@
 [[getting-started.first-application]]
-= 开发您的第一个 Web 应用程序
+= 开发第一个 Web 应用
 
-本节介绍如何开发一个小型的 "`Hello World!`" Web 应用程序，该应用程序重点介绍了该框架的一些关键功能。
-您可以选择 Gradle 或 Maven 作为构建系统。
+本教程使用 TODAY Infrastructure 和 Netty 构建一个 Web 应用。启动后，访问 `GET /` 即可收到 `Hello World!`。
+选择 Gradle 或 Maven 中的一种构建方式，两种方式使用同一份 Java 代码。
 
 [[getting-started.first-application.prerequisites]]
-== 准备
+== 准备环境
 
-在开始之前，打开终端并运行以下命令以确保您安装了有效版本的 Java：
+安装 JDK 17 或更高版本，并在终端中确认 Java 版本：
 
 [source,shell]
 ----
-$ java -version
-openjdk version "17.0.9" 2023-10-17 LTS
-OpenJDK Runtime Environment Zulu17.46+19-CA (build 17.0.9+8-LTS)
-OpenJDK 64-Bit Server VM Zulu17.46+19-CA (build 17.0.9+8-LTS, mixed mode, sharing)
+java -version
 ----
 
 [[getting-started.first-application.prerequisites.gradle]]
 === Gradle
 
-如果您想使用 Gradle，请确保已安装 Gradle：
+本教程的 Gradle 示例使用 Gradle 9.9.2。运行 `gradle --version`，确认 Gradle 已安装并使用所需的 JDK。
+
+[[getting-started.first-application.prerequisites.maven]]
+=== Maven
+
+本教程的 Maven 示例使用 Maven 3.9。运行 `mvn --version`，确认 Maven 已安装并使用所需的 JDK。
+
+ifeval::["{artifact-release-type}" == "snapshot"]
+=== 准备快照工件
+
+如果 Sonatype 上的快照尚未同步新的 `cn.infra-tech` 插件元数据，请在与本文版本对应的框架源码目录执行：
 
 [source,shell]
 ----
-$ gradle --version
-
-------------------------------------------------------------
-Gradle 8.7
-------------------------------------------------------------
-
-Build time:   2024-03-22 15:52:46 UTC
-Revision:     650af14d7653aa949fce5e886e685efc9cf97c10
-
-Kotlin:       1.9.22
-Groovy:       3.0.17
-Ant:          Apache Ant(TM) version 1.10.13 compiled on January 4 2023
-JVM:          17.0.9 (Azul Systems, Inc. 17.0.9+8-LTS)
-OS:           Mac OS X 14.4.1 aarch64
+./gradlew publishToMavenLocal
 ----
 
+这一步需要 JDK 25，与运行示例所需的 JDK 17 不同。下面的构建配置会优先使用本地安装的快照工件。
+endif::[]
 
 [[getting-started.first-application.gradle]]
 == 使用 Gradle 构建
 
-我们需要首先创建一个 Gradle `build.gradle` 文件。`build.gradle` 是用于构建项目的构建脚本。
+创建 `hello-web` 目录，并在其中创建 `settings.gradle`，使项目名和打包文件名不依赖目录名：
+
+[source,groovy]
+----
+rootProject.name = 'hello-web'
+----
+
+在同一目录创建 `build.gradle`。应用插件会自动应用 Java 插件并导入同版本的 `infra-dependencies` BOM，因此各个 Starter 不必分别指定版本。
+ifeval::["{artifact-release-type}" == "snapshot"]
+当前文档使用快照版本；示例通过 `buildscript` 直接加载插件，不依赖 Gradle 插件门户。
+endif::[]
 
 [source,groovy,subs="verbatim,attributes"]
 ----
-plugins {
-  id 'java'
-  id 'infra.application' version '{infra-version}'
+buildscript {
+  repositories {
+ifeval::["{artifact-release-type}" == "snapshot"]
+    mavenLocal { mavenContent { snapshotsOnly() } }
+endif::[]
+    mavenCentral()
+ifeval::["{artifact-release-type}" == "snapshot"]
+    maven {
+      url = uri('https://central.sonatype.com/repository/maven-snapshots/')
+      mavenContent { snapshotsOnly() }
+    }
+endif::[]
+  }
+  dependencies {
+    classpath 'cn.infra-tech:infra-gradle-plugin:{infra-version}'
+  }
 }
 
-apply plugin: 'io.spring.dependency-management'  // 有了该插件可以自动导入 infra-dependencies
+apply plugin: 'cn.infra-tech.application'
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
+
+tasks.withType(JavaCompile).configureEach {
+  options.release = 17
+}
 
 repositories {
-  mavenLocal()
-  maven { url "https://central.sonatype.com/repository/maven-snapshots/" }
+ifeval::["{artifact-release-type}" == "snapshot"]
+  mavenLocal { mavenContent { snapshotsOnly() } }
+endif::[]
   mavenCentral()
+ifeval::["{artifact-release-type}" == "snapshot"]
+  maven {
+    url = uri('https://central.sonatype.com/repository/maven-snapshots/')
+    mavenContent { snapshotsOnly() }
+  }
+endif::[]
 }
 
 dependencies {
-  implementation 'cn.taketoday:infra-starter-web'   // <1>
-  implementation 'cn.taketoday:infra-starter-netty' // <2>
-
+  implementation 'cn.infra-tech:infra-starter-application'
+  implementation 'cn.infra-tech:infra-starter-webmvc'
+  implementation 'cn.infra-tech:infra-starter-netty-server'
 }
-
 ----
 
-<1> 上面的 `infra-starter-*` 和 Spring Boot 的 `Starters` 是一个概念，这样设计也是方便那些会用 Spring Boot 的开发者
-<2> 使用 `Netty` 作为底层 HTTP 网络协议层处理。
+插件的其他应用方式见 xref:gradle-plugin:getting-started.adoc[Gradle 插件快速入门]。
+
+[[getting-started.first-application.maven]]
+== 使用 Maven 构建
+
+创建 `hello-web` 目录，并在其中创建 `pom.xml`。`infra-dependencies` BOM 统一管理依赖版本，`infra-maven-plugin` 提供启动和打包功能。
+ifeval::["{artifact-release-type}" == "snapshot"]
+当前文档使用快照版本；`repositories` 用于解析 BOM 和 Starter，`pluginRepositories` 用于解析 Maven 插件。
+endif::[]
+
+[source,xml,subs="verbatim,attributes"]
+----
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>hello-web</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+
+  <properties>
+    <infra.version>{infra-version}</infra.version>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>cn.infra-tech</groupId>
+        <artifactId>infra-dependencies</artifactId>
+        <version>${infra.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>cn.infra-tech</groupId>
+      <artifactId>infra-starter-application</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.infra-tech</groupId>
+      <artifactId>infra-starter-webmvc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cn.infra-tech</groupId>
+      <artifactId>infra-starter-netty-server</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+      </plugin>
+      <plugin>
+        <groupId>cn.infra-tech</groupId>
+        <artifactId>infra-maven-plugin</artifactId>
+        <version>${infra.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+ifeval::["{artifact-release-type}" == "snapshot"]
+
+  <repositories>
+    <repository>
+      <id>sonatype-snapshots</id>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+      <releases><enabled>false</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>sonatype-snapshots</id>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+      <releases><enabled>false</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+endif::[]
+</project>
+----
 
 [[getting-started.first-application.code]]
 == 添加 Hello World 代码
 
-和 Spring Boot 一样我们也只需要一个文件就能完成这个简单的 Web 应用。
-在 `build.gradle` 文件所在的同级目录下创建 `src/main/java/demo/DemoApplication.java` 文件。
+在项目目录下创建 `src/main/java/demo/DemoApplication.java`：
 
 [source,java]
 ----
@@ -88,18 +209,18 @@ package demo;
 
 import infra.app.Application;
 import infra.app.InfraApplication;
-import infra.web.annotation.RestController;
 import infra.web.annotation.GET;
+import infra.web.annotation.RestController;
 
-@RestController
 @InfraApplication
+@RestController
 public class DemoApplication {
 
   public static void main(String[] args) {
     Application.run(DemoApplication.class, args);
   }
 
-  @GET
+  @GET("/")
   public String hello() {
     return "Hello World!";
   }
@@ -107,90 +228,81 @@ public class DemoApplication {
 }
 ----
 
-TIP: 如果你用过 Spring 系列的框架 `@RestController` 你一定不陌生应该知道它的作用。
-上面出现的注解我会在后面的xref:ROOT:web/webmvc.adoc[MVC 部分]中重点提到。
+`@GET("/")` 将 `GET /` 映射到 `hello()`。`@RestController` 让方法返回的字符串直接写入 HTTP 响应体。
+更多路由和控制器用法见 xref:ROOT:web/webmvc.adoc[Web MVC]。
 
 [[getting-started.first-application.code.infra-application]]
 === @InfraApplication 注解
 
-`@InfraApplication` 注解是一个 _元注解_ 包含了 `@Configuration`, `@EnableAutoConfiguration`，`@ComponentScan` 功能。后面章节会详细提到。
+`@InfraApplication` 组合了 `@Configuration`、`@EnableAutoConfiguration` 和 `@ComponentScan`。
+它将 `DemoApplication` 声明为配置类，开启自动配置，并默认从 `demo` 包开始扫描组件。
 
-`@EnableAutoConfiguration` 注解 含义是 开启自动配置，去决定使用哪些 Bean。
-
-添加了 `infra-starter-web` 依赖之后 框架会自动识别当前应用是一个 Web 应用。
-会开启一个 Web 服务器 由于存在 `infra-starter-netty` 依赖，所以使用了 Netty 作为底层 Web 服务器支持。
-
-.Starters 和 Auto-configuration（自动配置）
-****
-自动配置 一般是和 "`Starters`" 相结合来工作的, Starters 一般会包含一组依赖和配置.
-****
+本例中，`infra-starter-application` 提供应用启动所需的依赖，`infra-starter-webmvc` 引入 Web MVC 组件，`infra-starter-netty-server` 引入 Netty Web 服务器。
+框架根据类路径上的这些组件和应用配置，自动配置 Web MVC 并启动服务器。
 
 [[getting-started.first-application.code.main-method]]
-=== 使用 IDE 执行 "`main`" 方法
+=== 从 IDE 运行
 
-main 方法作为整个应用的入口。调用 `Application.run` 方法来启动初始化整个框架，包括自动配置应用中的 Bean，和 Web 服务器等。
-如果你使用像 `IntelliJ IDEA` 之类的开发工具。直接运行 main 方法即可启动你的 Hello World 应用程序。
+用 IDE 导入 Gradle 或 Maven 项目，待依赖解析完成后，运行 `DemoApplication.main()`。
+`main()` 调用 `Application.run()`，创建应用上下文并启动 Web 服务器。
 
 [[getting-started.first-application.run.gradle]]
 == 使用 Gradle 运行
 
-可以直接使用 `gradle infraRun` 命令启动。
+在项目目录执行：
 
-[source,text,subs="verbatim,attributes"]
+[source,shell]
 ----
-$ gradle infraRun
-
- ______  ____    ___    ___  __  __        ____   _  __   ____   ___    ___
-/_  __/ / __ \  / _ \  / _ | \ \/ /       /  _/  / |/ /  / __/  / _ \  / _ |
- / /   / /_/ / / // / / __ |  \  /       _/ /   /    /  / _/   / , _/ / __ |
-/_/    \____/ /____/ /_/ |_|  /_/       /___/  /_/|_/  /_/    /_/|_| /_/ |_| (v{infra-version})
-
-[1111-11-11 11:11:11.111] - 80362 INFO [main] --- demo.DemoApplication: Starting DemoApplication using Java 17.0.9 on xxx with PID 80362 (build/classes/java/main started by xx )
-[1111-11-11 11:11:11.111] - 80362 INFO [main] --- demo.DemoApplication: No active profile set, falling back to 1 default profile: "default"
-[1111-11-11 11:11:11.111] - 80362 INFO [main] --- infra.web.context.AnnotationConfigWebServerApplicationContext: Starting application context at '1111-11-11 11:11:11.111'
-[1111-11-11 11:11:11.111] - 80362 INFO [main] --- infra.web.netty.NettyChannelHandler: Completed initialization in 1 ms
-[1111-11-11 11:11:11.111] - 80362 INFO [main] --- infra.web.netty.NettyWebServer: Netty web server started on port: '8080'
-[1111-11-11 11:11:11.111] - 80362 INFO [main] --- infra.web.context.AnnotationConfigWebServerApplicationContext: Application context startup in 366 ms
-[1111-11-11 11:11:11.111] - 80362 INFO [main] --- demo.DemoApplication: Started DemoApplication in 5.544 seconds (process running for 5.621)
+gradle infraRun
 ----
 
-打开浏览器输入 `http://localhost:8080`, 你会看到：
+[[getting-started.first-application.run.maven]]
+== 使用 Maven 运行
 
-[source]
+在项目目录执行：
+
+[source,shell]
+----
+mvn infra:run
+----
+
+[[getting-started.first-application.verify]]
+== 验证应用
+
+启动日志显示服务器已监听 `8080` 后，在浏览器中访问 link:http://localhost:8080/[`http://localhost:8080/`]，或打开另一个终端执行：
+
+[source,shell]
+----
+curl -fsS http://localhost:8080/
+----
+
+响应如下：
+
+[source,text]
 ----
 Hello World!
 ----
 
-使用 `ctrl-c` 优雅退出应用。
+打包并重新启动之前，先在启动应用的终端按 `Ctrl+C` 停止应用；如果从 IDE 启动，则使用 IDE 的停止按钮。
 
 [[getting-started.first-application.executable-jar.gradle]]
-== 使用 Gradle 打包一个可执行 Jar
+== 使用 Gradle 打包可执行 JAR
 
-使用 `gradle infraJar` 命令构建:
-
-[source,shell,subs="verbatim,attributes"]
+[source,shell]
 ----
 gradle infraJar
-
-BUILD SUCCESSFUL in 639ms
-3 actionable tasks: 3 executed
+java -jar build/libs/hello-web-0.0.1-SNAPSHOT.jar
 ----
 
-在你的 `build/libs` 目录下, 有个一 `xxx-0.0.1-SNAPSHOT.jar` 文件.
+[[getting-started.first-application.executable-jar.maven]]
+== 使用 Maven 打包可执行 JAR
 
-使用 `java -jar` 命令运行:
+`mvn package` 会执行 POM 中配置的 `repackage` 目标，将应用及其运行时依赖一起打包。
 
-[source,text,subs="verbatim,attributes"]
+[source,shell]
 ----
-$ java -jar build/libs/xxx-0.0.1-SNAPSHOT.jar
-
- ______  ____    ___    ___  __  __        ____   _  __   ____   ___    ___
-/_  __/ / __ \  / _ \  / _ | \ \/ /       /  _/  / |/ /  / __/  / _ \  / _ |
- / /   / /_/ / / // / / __ |  \  /       _/ /   /    /  / _/   / , _/ / __ |
-/_/    \____/ /____/ /_/ |_|  /_/       /___/  /_/|_/  /_/    /_/|_| /_/ |_| (v{infra-version})
-
-....... . . .
-....... . . . 启动日志
-....... . . .
-........ Started MyApplication in 0.999 seconds (process running for 1.253)
+mvn package
+java -jar target/hello-web-0.0.1-SNAPSHOT.jar
 ----
+
+无论使用哪种构建方式，都可以再次访问 http://localhost:8080/ 验证打包后的应用。

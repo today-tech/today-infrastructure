@@ -20,6 +20,7 @@ package infra.jdbc.core.support;
 
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,13 +29,38 @@ import javax.sql.DataSource;
 import infra.jdbc.core.JdbcTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 /**
  * @author Juergen Hoeller
  * @since 30.07.2003
  */
 public class JdbcDaoSupportTests {
+
+  @Test
+  void requiresConfigurationAndReusesTemplateForSameDataSource() throws Exception {
+    var dao = new JdbcDataAccessObjectSupport() { };
+    assertThat(dao.getDataSource()).isNull();
+    assertThatIllegalArgumentException().isThrownBy(dao::afterPropertiesSet);
+    assertThatIllegalStateException().isThrownBy(dao::getConnection);
+    assertThatIllegalStateException().isThrownBy(dao::getExceptionTranslator);
+
+    var source = mock(DataSource.class);
+    var connection = mock(Connection.class);
+    given(source.getConnection()).willReturn(connection);
+    dao.setDataSource(source);
+    var template = dao.getJdbcTemplate();
+    dao.setDataSource(source);
+    assertThat(dao.getJdbcTemplate()).isSameAs(template);
+    assertThat(dao.getExceptionTranslator()).isSameAs(template.getExceptionTranslator());
+    assertThat(dao.getConnection()).isSameAs(connection);
+    dao.releaseConnection(connection);
+    verify(connection).close();
+  }
 
   @Test
   public void testJdbcDaoSupportWithDataSource() throws Exception {

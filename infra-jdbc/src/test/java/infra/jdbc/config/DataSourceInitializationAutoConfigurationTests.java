@@ -27,7 +27,9 @@ import infra.context.annotation.Bean;
 import infra.context.annotation.Configuration;
 import infra.context.annotation.config.AutoConfigurations;
 import infra.jdbc.init.DataSourceScriptDatabaseInitializer;
+import infra.jdbc.datasource.SimpleDriverDataSource;
 import infra.sql.config.init.ApplicationScriptDatabaseInitializer;
+import infra.sql.config.init.SqlInitializationProperties;
 import infra.sql.init.AbstractScriptDatabaseInitializer;
 import infra.sql.init.DatabaseInitializationSettings;
 import infra.sql.init.dependency.DependsOnDatabaseInitialization;
@@ -44,6 +46,23 @@ import static org.mockito.Mockito.mock;
  */
 class DataSourceInitializationAutoConfigurationTests {
 
+  @Test
+  void initializationCredentialsOverrideApplicationDataSourceCredentials() {
+    var source = new SimpleDriverDataSource(new org.h2.Driver(), "jdbc:h2:mem:sample", "application", "secret");
+    var properties = new SqlInitializationProperties();
+    properties.setUsername("initializer");
+    properties.setPassword("other");
+    var initializer = DataSourceInitializationAutoConfiguration.dataSourceScriptDatabaseInitializer(source, properties);
+    assertThat(initializer).extracting("dataSource").isInstanceOfSatisfying(SimpleDriverDataSource.class, derived -> {
+      assertThat(derived.getUrl()).isEqualTo(source.getUrl());
+      assertThat(derived.getUsername()).isEqualTo("initializer");
+      assertThat(derived.getPassword()).isEqualTo("other");
+    });
+    properties.setPassword(null);
+    assertThat(DataSourceInitializationAutoConfiguration.dataSourceScriptDatabaseInitializer(source, properties))
+            .extracting("dataSource").isSameAs(source);
+  }
+
   private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
           .withConfiguration(AutoConfigurations.of(DataSourceInitializationAutoConfiguration.class))
           .withPropertyValues("datasource.generate-unique-name:true");
@@ -57,7 +76,8 @@ class DataSourceInitializationAutoConfigurationTests {
   @Test
   void whenDataSourceIsAvailableThenDataSourceInitializerIsAutoConfigured() {
     this.contextRunner.withConfiguration(AutoConfigurations.of(DataSourceAutoConfiguration.class))
-            .run((context) -> assertThat(context).hasSingleBean(DataSourceScriptDatabaseInitializer.class));
+            .run((context) -> assertThat(context).hasSingleBean(DataSourceScriptDatabaseInitializer.class)
+                    .hasSingleBean(DataSourceInitializationAutoConfiguration.class));
   }
 
   @Test

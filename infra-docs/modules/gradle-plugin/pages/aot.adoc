@@ -5,7 +5,7 @@ Infra AOT 在构建时分析代码，并生成经过优化的代码。
 它最常用于辅助生成 GraalVM 原生镜像。
 
 Infra Gradle 插件内置对应用代码和测试代码执行 AOT 处理的支持，但默认不启用。
-无需应用独立的 AOT 插件 ID；要在 JVM 应用中使用 AOT，请在应用 `cn.taketoday.application` 后显式启用：
+无需应用独立的 AOT 插件 ID；要在 JVM 应用中使用 AOT，请在应用 `cn.infra-tech.application` 后显式启用：
 
 [source,groovy,indent=0,subs="verbatim,attributes",role="primary"]
 .Groovy

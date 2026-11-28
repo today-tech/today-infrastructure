@@ -24,11 +24,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import infra.aop.ProxyMethodInvocation;
 import infra.beans.factory.FactoryBean;
 import infra.beans.factory.SmartFactoryBean;
 import infra.validation.annotation.Validated;
+import infra.logging.Logger;
+import infra.logging.LoggerFactory;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
@@ -36,6 +39,10 @@ import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +52,31 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 class MethodValidationInterceptorTests {
+
+  @Test
+  void optionalValidatorSurvivesMissingProvider() {
+    var logger = mock(Logger.class);
+    when(logger.isDebugEnabled()).thenReturn(true, false);
+    when(logger.isInfoEnabled()).thenReturn(true);
+    try (var factory = mockStatic(LoggerFactory.class, org.mockito.Mockito.CALLS_REAL_METHODS)) {
+      factory.when(() -> LoggerFactory.getLogger(OptionalValidatorFactoryBean.class)).thenReturn(logger);
+      var validator = new OptionalValidatorFactoryBean();
+      validator.setValidationProviderResolver(List::of);
+      validator.afterPropertiesSet();
+      validator.afterPropertiesSet();
+      assertThat(validator.supports(String.class)).isFalse();
+      verify(logger, times(1)).debug(anyString(), any(Throwable.class));
+      verify(logger, times(1)).info(anyString());
+    }
+  }
+
+  @Test
+  void optionalValidatorInitializesWhenProviderIsAvailable() {
+    try (var validator = new OptionalValidatorFactoryBean()) {
+      validator.afterPropertiesSet();
+      assertThat(validator.supports(String.class)).isTrue();
+    }
+  }
 
   @Mock
   private MethodInvocation methodInvocation;

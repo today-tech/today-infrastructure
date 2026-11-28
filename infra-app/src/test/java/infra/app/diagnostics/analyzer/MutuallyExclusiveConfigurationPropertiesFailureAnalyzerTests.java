@@ -29,6 +29,7 @@ import java.util.Map;
 
 import infra.app.diagnostics.FailureAnalysis;
 import infra.context.properties.source.MutuallyExclusiveConfigurationPropertiesException;
+import infra.context.properties.IncompatibleConfigurationException;
 import infra.core.env.EnumerablePropertySource;
 import infra.core.env.MapPropertySource;
 import infra.mock.env.MockEnvironment;
@@ -43,6 +44,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Andy Wilkinson
  */
 class MutuallyExclusiveConfigurationPropertiesFailureAnalyzerTests {
+
+  @Test
+  void incompatibleConfigurationAnalysisIdentifiesAllConflictingKeys() {
+    var cause = new IncompatibleConfigurationException("sample.first", "sample.second");
+    var analysis = new IncompatibleConfigurationFailureAnalyzer().analyze(new IllegalStateException(cause));
+    assertThat(analysis.getCause()).isSameAs(cause);
+    assertThat(analysis.getDescription()).isEqualTo(cause.getMessage());
+    assertThat(analysis.getAction()).contains("sample.first, sample.second", "change the configured values");
+  }
 
   private final MockEnvironment environment = new MockEnvironment();
 

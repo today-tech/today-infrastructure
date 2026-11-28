@@ -40,6 +40,20 @@ import static org.mockito.Mockito.mock;
  */
 class InvocableHandlerMethodTests {
 
+  @Test
+  void resolutionExceptionPreservesParameterMessageAndCause() throws Exception {
+    var parameter = new MethodParameter(String.class.getMethod("charAt", int.class), 0);
+    var cause = new IllegalArgumentException("invalid index");
+    var basic = new MethodArgumentResolutionException(message, parameter);
+    var described = new MethodArgumentResolutionException(message, parameter, "index missing");
+    var chained = new MethodArgumentResolutionException(message, parameter, "index missing", cause);
+    assertThat(basic.getMethodParameter()).isSameAs(parameter);
+    assertThat(basic.getFailedMessage()).isSameAs(message);
+    assertThat(basic).hasMessageContainingAll("index 0", "charAt");
+    assertThat(described).hasMessageContaining("index missing").hasNoCause();
+    assertThat(chained).hasMessageContaining("index missing").hasCause(cause);
+  }
+
   private final Message<?> message = mock();
 
   private final HandlerMethodArgumentResolverComposite resolvers = new HandlerMethodArgumentResolverComposite();

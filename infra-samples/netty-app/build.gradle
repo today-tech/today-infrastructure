@@ -4,10 +4,10 @@ apply plugin: 'application'
 
 dependencies {
   implementation project(":web-api")
-  implementation 'cn.taketoday:infra-starter-webmvc'
-  implementation 'cn.taketoday:infra-starter-application'
-  implementation 'cn.taketoday:infra-starter-netty-server'
-  implementation 'cn.taketoday:infra-starter-freemarker'
+  implementation 'cn.infra-tech:infra-starter-webmvc'
+  implementation 'cn.infra-tech:infra-starter-application'
+  implementation 'cn.infra-tech:infra-starter-netty-server'
+  implementation 'cn.infra-tech:infra-starter-freemarker'
 
   implementation 'ch.qos.logback:logback-classic'
 }

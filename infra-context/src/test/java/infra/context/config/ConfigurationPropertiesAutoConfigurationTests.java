@@ -50,6 +50,7 @@ class ConfigurationPropertiesAutoConfigurationTests {
   void processAnnotatedBean() {
     load(new Class<?>[] { AutoConfig.class, SampleBean.class }, "foo.name:test");
     assertThat(this.context.getBean(SampleBean.class).getName()).isEqualTo("test");
+    assertThat(this.context.getBean(ConfigurationPropertiesAutoConfiguration.class)).isNotNull();
   }
 
   @Test
