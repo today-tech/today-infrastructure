@@ -18,10 +18,13 @@
 
 package infra.building.maven;
 
+import org.gradle.api.GradleException;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,12 +32,11 @@ import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-
-import infra.util.ExceptionUtils;
 
 /**
  * A parser for a Maven plugin's {@code plugin.xml} file.
@@ -59,8 +61,8 @@ class PluginXmlParser {
       return new Plugin(textAt("//plugin/groupId", root), textAt("//plugin/artifactId", root),
               textAt("//plugin/version", root), textAt("//plugin/goalPrefix", root), mojos);
     }
-    catch (Exception ex) {
-      throw ExceptionUtils.sneakyThrow(ex);
+    catch (IOException | SAXException | ParserConfigurationException | XPathExpressionException ex) {
+      throw new GradleException("Failed to parse Maven plugin descriptor " + pluginXml, ex);
     }
   }
 

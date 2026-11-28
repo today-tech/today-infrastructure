@@ -18,9 +18,9 @@ dependencies {
   implementation("org.apache.maven:maven-artifact:3.9.16")
   implementation("net.ltgt.gradle:gradle-errorprone-plugin:4.3.0")
 
-  implementation 'cn.taketoday:infra-core:5.0-Draft.9'
-  implementation 'cn.infra-tech:maven-central-publishing-gradle-plugin:0.0.1'
+  compileOnly 'org.jspecify:jspecify:1.0.1'
 
+  implementation 'cn.infra-tech:maven-central-publishing-gradle-plugin:0.0.1'
 }
 
 gradlePlugin {

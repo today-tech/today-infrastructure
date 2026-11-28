@@ -21,8 +21,6 @@ package infra.building.bom.version;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import infra.util.StringUtils;
-
 /**
  * A {@link DependencyVersion} for a release train.
  *
@@ -122,8 +120,9 @@ final class ReleaseTrainDependencyVersion implements DependencyVersion {
     if (!matcher.matches()) {
       return null;
     }
+    String step = matcher.group(3);
     return new ReleaseTrainDependencyVersion(matcher.group(1), matcher.group(2),
-            (StringUtils.isNotEmpty(matcher.group(3))) ? Integer.parseInt(matcher.group(3)) : 0, input);
+            step == null || step.isEmpty() ? 0 : Integer.parseInt(step), input);
   }
 
 }

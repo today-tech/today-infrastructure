@@ -38,7 +38,7 @@ import org.w3c.dom.NodeList;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,7 +61,6 @@ import groovy.lang.Closure;
 import groovy.lang.GroovyObjectSupport;
 import infra.building.bom.version.DependencyVersion;
 import infra.building.maven.MavenExec;
-import infra.util.FileCopyUtils;
 
 import static org.gradle.api.plugins.JavaPlatformPlugin.API_CONFIGURATION_NAME;
 
@@ -121,9 +120,11 @@ public class BomExtension {
         File generatedBomDir = new File(buildDir, "generated/bom");
         syncBom.setDestinationDir(generatedBomDir);
         syncBom.from(((GenerateMavenPom) task).getDestination(), (pom) -> pom.rename((name) -> "pom.xml"));
-        try {
-          String settingsXmlContent = FileCopyUtils.copyToString(new InputStreamReader(
-                          getClass().getClassLoader().getResourceAsStream("effective-bom-settings.xml"), StandardCharsets.UTF_8))
+        try (InputStream settings = BomExtension.class.getResourceAsStream("/effective-bom-settings.xml")) {
+          if (settings == null) {
+            throw new GradleException("Missing effective-bom-settings.xml");
+          }
+          String settingsXmlContent = new String(settings.readAllBytes(), StandardCharsets.UTF_8)
                   .replace("localRepositoryPath", new File(buildDir, "local-m2-repository").getAbsolutePath());
           syncBom.from(project.getResources().getText().fromString(settingsXmlContent),
                   settingsXml -> settingsXml.rename(name -> "settings.xml"));

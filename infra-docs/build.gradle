@@ -1,4 +1,4 @@
-import infra.lang.Version
+import infra.building.antora.DocumentationVersion
 
 plugins {
   id 'java-library'
@@ -29,10 +29,9 @@ javadoc {
 generateAntoraYml {
   asciidocAttributes = project.provider({
     String versionString = project.version.toString()
-    Version version = Version.parse(versionString)
     return [
         "infra-version"             : versionString,
-        "artifact-release-type"     : versionString.endsWith('-SNAPSHOT') ? 'snapshot' : version.isRelease() ? 'release' : version.type(),
+        "artifact-release-type"     : DocumentationVersion.artifactReleaseType(versionString),
         "native-build-tools-version": project.property('nativeBuildToolsVersion')
     ]
   })

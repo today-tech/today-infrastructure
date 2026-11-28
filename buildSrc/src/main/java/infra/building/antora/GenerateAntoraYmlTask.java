@@ -41,8 +41,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import infra.lang.Version;
-
 @SuppressWarnings("unchecked")
 public abstract class GenerateAntoraYmlTask extends DefaultTask {
 
@@ -154,12 +152,11 @@ public abstract class GenerateAntoraYmlTask extends DefaultTask {
     if (configuredVersion == null) {
       return Collections.emptyMap();
     }
-    Version version = Version.parse(configuredVersion);
-
     Map<String, Object> result = new LinkedHashMap<>(2);
     result.put("version", configuredVersion);
-    if (version.isPreRelease()) {
-      result.put("prerelease", version.type());
+    String label = DocumentationVersion.prereleaseLabel(configuredVersion);
+    if (label != null) {
+      result.put("prerelease", label);
     }
     return result;
   }
