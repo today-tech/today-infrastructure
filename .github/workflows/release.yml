@@ -73,7 +73,7 @@ jobs:
           - name: maven-central
             staging-root: release-reports
           - name: plugin-application
-            url: ${{ format('https://plugins.gradle.org/m2/cn/taketoday/application/cn.taketoday.application.gradle.plugin/{0}/cn.taketoday.application.gradle.plugin-{0}.pom', needs.build-and-stage-release.outputs.version) }}
+            url: ${{ format('https://plugins.gradle.org/m2/cn/infra-tech/application/cn.infra-tech.application.gradle.plugin/{0}/cn.infra-tech.application.gradle.plugin-{0}.pom', needs.build-and-stage-release.outputs.version) }}
     steps:
       - name: Checkout project sources
         uses: actions/checkout@v7

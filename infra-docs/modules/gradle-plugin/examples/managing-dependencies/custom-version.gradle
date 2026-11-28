@@ -7,7 +7,7 @@ apply plugin: 'io.spring.dependency-management'
 dependencyManagement {
   resolutionStrategy {
     eachDependency {
-      if (it.requested.group == 'cn.taketoday') {
+      if (it.requested.group == 'cn.infra-tech') {
         it.useVersion 'TEST-SNAPSHOT'
       }
     }

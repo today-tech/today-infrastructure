@@ -1,6 +1,6 @@
 description = "Non-Web Command Line Application"
 
 dependencies {
-  implementation 'cn.taketoday:infra-starter-application'
-  implementation 'cn.taketoday:infra-starter-logback'
+  implementation 'cn.infra-tech:infra-starter-application'
+  implementation 'cn.infra-tech:infra-starter-logback'
 }

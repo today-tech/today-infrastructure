@@ -6,7 +6,7 @@ TODAY INFRA 提供 Jackson 3、Gson 和 JSON-B 的自动配置。
 
 == Jackson 3
 
-使用 `cn.taketoday:infra-starter-jackson` 可以引入 Jackson 及其集成模块。
+使用 `cn.infra-tech:infra-starter-jackson` 可以引入 Jackson 及其集成模块。
 满足自动配置条件且没有用户提供的匹配 Bean 时，会创建 `tools.jackson.databind.json.JsonMapper`。
 设置由 `infra.jackson.config.JacksonProperties` 定义，前缀是 `jackson`：
 
@@ -36,7 +36,7 @@ jackson:
 
 == Gson
 
-使用 `cn.taketoday:infra-starter-gson` 引入相应集成。
+使用 `cn.infra-tech:infra-starter-gson` 引入相应集成。
 自动配置在不存在用户提供的匹配 Bean 时创建 `com.google.gson.GsonBuilder` 和 `Gson`。
 属性由 `infra.gson.config.GsonProperties` 定义，使用 `gson.*` 前缀。
 可以通过 `infra.gson.config.GsonBuilderCustomizer` Bean 定制 Builder。
@@ -49,7 +49,7 @@ gson.serialize-nulls=true
 
 == JSON-B
 
-使用 `cn.taketoday:infra-starter-jsonb` 引入 JSON-B 集成。
+使用 `cn.infra-tech:infra-starter-jsonb` 引入 JSON-B 集成。
 当 `jakarta.json.bind.Jsonb` 和所需的 JSON-B、JSON-P Provider 服务资源存在，且没有用户提供的 `Jsonb` Bean 时，自动配置调用 `JsonbBuilder.create()` 创建默认 Bean。
 
 上游当前文档中的 Jackson 2 兼容模块、相关弃用计划和 Kotlin Serialization 自动配置不作为本页的 infra 使用说明。

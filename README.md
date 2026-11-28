@@ -10,9 +10,9 @@
 [![Codecov](https://github.com/today-tech/today-infrastructure/actions/workflows/codecov.yaml/badge.svg)](https://github.com/today-tech/today-infrastructure/actions/workflows/codecov.yaml)
 [![Coveralls](https://github.com/today-tech/today-infrastructure/actions/workflows/coveralls.yaml/badge.svg)](https://github.com/today-tech/today-infrastructure/actions/workflows/coveralls.yaml)
 [![CI](https://github.com/today-tech/today-infrastructure/actions/workflows/ci.yaml/badge.svg)](https://github.com/today-tech/today-infrastructure/actions/workflows/ci.yaml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3ad5eed64065496fba9244d149820f67)](https://app.codacy.com/gh/TAKETODAY/today-infrastructure/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3ad5eed64065496fba9244d149820f67)](https://app.codacy.com/gh/today-tech/today-infrastructure/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Coverage Status](https://codecov.io/gh/today-tech/today-infrastructure/branch/master/graph/badge.svg)](https://codecov.io/gh/today-tech/today-infrastructure)
-[![Coverage Status](https://coveralls.io/repos/github/TAKETODAY/today-infrastructure/badge.svg)](https://coveralls.io/github/TAKETODAY/today-infrastructure)
+[![Coverage Status](https://coveralls.io/repos/github/today-tech/today-infrastructure/badge.svg)](https://coveralls.io/github/today-tech/today-infrastructure)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FTAKETODAY%2Ftoday-infrastructure.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FTAKETODAY%2Ftoday-infrastructure?ref=badge_shield)
 
 [快速开始](#快速开始) · [安装配置](#installation) · [真实应用](#today-blog) · [在线文档](https://today-tech.cn/today-infrastructure/) · [AI 辅助开发](#ai-辅助开发) · [示例工程](infra-samples) · [贡献指南](CONTRIBUTING.md) · [交流讨论](https://github.com/today-tech/today-infrastructure/discussions)
@@ -194,6 +194,8 @@ SUM:                                  11400         241178         462464       
 
 ## 🛠️ 安装
 
+1.0 开发线使用 `cn.infra-tech`，框架 Java 包名保持 `infra.*`。历史 5.0-Draft 工件继续使用 `cn.taketoday`；升级时请同时更新 BOM、插件和 Starter，避免在同一应用里混用两套工件。新的 Gradle 插件 ID `cn.infra-tech.application` 需在对应版本通过插件门户审核后才能从门户解析。
+
 ### Gradle
 
 推荐方式：[buildSrc/build.gradle](infra-samples/buildSrc/build.gradle)
@@ -211,8 +213,8 @@ repositories {
 }
 
 dependencies {
-  implementation(platform("cn.taketoday:infra-bom:$infraVersion"))
-  implementation "cn.taketoday:infra-gradle-plugin"
+  implementation(platform("cn.infra-tech:infra-bom:$infraVersion"))
+  implementation "cn.infra-tech:infra-gradle-plugin"
   
 }
 ```
@@ -230,7 +232,7 @@ buildscript {
   }
 
   dependencies {
-    classpath "cn.taketoday:infra-gradle-plugin:$infraVersion"
+    classpath "cn.infra-tech:infra-gradle-plugin:$infraVersion"
   }
 }
 
@@ -254,8 +256,8 @@ repositories {
 }
 
 dependencies {
-  implementation 'cn.taketoday:infra-starter-netty-server'
-  implementation 'cn.taketoday:infra-starter-webmvc'
+  implementation 'cn.infra-tech:infra-starter-netty-server'
+  implementation 'cn.infra-tech:infra-starter-webmvc'
 }
 
 ```
@@ -284,6 +286,7 @@ cd today-infrastructure/infra-samples
 
 Windows 下使用 `gradlew.bat` 替代 `./gradlew`。
 示例使用的框架版本从仓库根目录的 `gradle.properties` 读取，依赖通过配置的 Maven 仓库解析。
+如果该版本的远端快照尚未包含当前源码中的插件变更，可先在仓库根目录运行 `./gradlew :infra-build:infra-gradle-plugin:publishToMavenLocal`，再运行示例。若框架依赖也尚未发布，可先在根目录运行 `./gradlew publishToMavenLocal`。
 
 服务启动后，在另一个终端执行：
 

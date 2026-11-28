@@ -3,7 +3,7 @@ plugins {
 }
 
 configure(subprojects) {
-  group = "cn.taketoday.samples"
+  group = "cn.infra-tech.samples"
 
   apply plugin: 'java'
   apply plugin: "infra.application"
@@ -29,7 +29,7 @@ configure(subprojects) {
   }
 
   dependencies {
-    testImplementation 'cn.taketoday:infra-starter-test'
+    testImplementation 'cn.infra-tech:infra-starter-test'
   }
 }
 

@@ -49,12 +49,12 @@ if (portalPublishing) {
 
 gradlePlugin {
   automatedPublishing = true
-  website = "https://infra-tech.cn/projects/today-infrastructure"
+  website = "https://today-tech.cn/projects/today-infrastructure/"
   vcsUrl = "https://github.com/today-tech/today-infrastructure"
 
   plugins {
     create("infraPlugin") {
-      id = "cn.taketoday.application"
+      id = "cn.infra-tech.application"
       tags.set(['today-infrastructure', 'web', 'application', 'executable-jar', 'dependency-management', 'aot', 'native-image', 'graalvm'])
       displayName = "Infra Application Gradle Plugin"
       description = project.description

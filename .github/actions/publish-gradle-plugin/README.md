@@ -5,18 +5,18 @@ Release 工作流先发布 Maven 工件，再等待 Maven Central 上的框架�
 
 ## 发布坐标与插件 ID
 
-- Maven 实现坐标：`cn.taketoday:infra-gradle-plugin:<version>`。
-- Portal 应用插件 ID：`cn.taketoday.application`。
+- Maven 实现坐标：`cn.infra-tech:infra-gradle-plugin:<version>`。
+- Portal 应用插件 ID：`cn.infra-tech.application`。
 - AOT 内置于应用插件，通过 `infraApplication { enableAheadOfTimeProcessing() }` 或 Native Image 集成启用，不单独发布 AOT 插件 ID。
 - GraalVM Native Image 集成通过 `infraApplication { enableNativeImage() }` 启用，Native Build Tools 版本随插件提供，无需手动应用 `org.graalvm.buildtools.native`。
 
-插件 ID 和 Maven group 使用共同的 `cn.taketoday` 命名空间。
+插件 ID 和 Maven group 使用共同的 `cn.infra-tech` 命名空间。
 已有的 `infra.application` 保留为 JAR 内的兼容描述符，
 通过 `buildSrc` 或 `buildscript` 加载插件实现后仍可使用；该短 ID 不发布到 Portal。
 独立的 `infra.application.aot` ID 已移除，请使用 `infraApplication.enableAheadOfTimeProcessing()`。
 
 首次发布前，在 [Plugin Portal](https://plugins.gradle.org/user/login) 注册账号并创建 API Key。
-Portal 可能要求通过 `taketoday.cn` 的 DNS TXT 记录验证域名所有权，具体记录由 Portal 提供。
+迁移后的 1.0 系列使用新 ID。Portal 可能要求通过 `infra-tech.cn` 的 DNS TXT 记录验证域名所有权，具体记录由 Portal 提供。旧 ID `cn.taketoday.application` 继续用于已发布的 5.0-Draft 版本。
 首次发布还需要人工审核，上传成功不等于立即可供使用。
 
 ## GitHub Secrets
@@ -42,7 +42,7 @@ Portal 可能要求通过 `taketoday.cn` 的 DNS TXT 记录验证域名所有权
 ```groovy
 plugins {
   id 'java'
-  id 'cn.taketoday.application' version '<version>'
+  id 'cn.infra-tech.application' version '<version>'
 }
 ```
 
@@ -59,8 +59,10 @@ plugins {
 ./gradlew :infra-build:infra-gradle-plugin:pluginDescriptors :infra-build:infra-gradle-plugin:processResources -PportalPublishing=true -PbuildSrc.skipTests=true
 ```
 
+准备好非快照版本和所需的发布配置后，可以用 `publishPlugins --validate-only` 校验门户发布配置而不上传；`--dry-run` 只检查任务图，两者不替代门户审核。
+
 发布实现位于 `infra-build/infra-gradle-plugin/build.gradle`。
-`gradlePlugin.plugins` 仅声明 `cn.taketoday.application`，正常构建和 Portal 发布使用相同的插件 ID。
+`gradlePlugin.plugins` 仅声明 `cn.infra-tech.application`，正常构建和 Portal 发布使用相同的插件 ID。
 `com.gradle.plugin-publish` 仅在 Portal 发布模式下应用，避免为普通 SNAPSHOT 构建创建需要密钥的 Portal 签名任务。
 Release Action 传入 `-PportalPublishing=true`，启用 Portal 发布。
 `src/main/resources/META-INF/gradle-plugins/` 中的短 ID 描述符保留原有入口，不生成对应的 Portal 插件标记。

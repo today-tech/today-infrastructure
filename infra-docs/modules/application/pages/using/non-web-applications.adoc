@@ -48,7 +48,7 @@ buildscript {
   }
 
   dependencies {
-    classpath 'cn.taketoday:infra-gradle-plugin:{infra-version}'
+    classpath 'cn.infra-tech:infra-gradle-plugin:{infra-version}'
   }
 }
 
@@ -71,14 +71,14 @@ repositories {
 }
 
 dependencies {
-  implementation 'cn.taketoday:infra-starter-application'
-  implementation 'cn.taketoday:infra-starter-logback'
+  implementation 'cn.infra-tech:infra-starter-application'
+  implementation 'cn.infra-tech:infra-starter-logback'
 }
 ----
 
 `buildscript.dependencies.classpath` 提供构建插件依赖，`repositories` 则提供应用依赖的解析仓库；
 两者用途不同，因此这里分别配置仓库。
-通过 `buildSrc` 或上面的 `buildscript` 将 `cn.taketoday:infra-gradle-plugin` 加入构建类路径后，
+通过 `buildSrc` 或上面的 `buildscript` 将 `cn.infra-tech:infra-gradle-plugin` 加入构建类路径后，
 即可使用 `apply plugin: 'infra.application'` 应用插件。
 
 加载并应用 `infra.application` 后，插件默认会自动应用 `io.spring.dependency-management`，并导入对应版本的依赖管理 BOM，

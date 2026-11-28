@@ -99,7 +99,7 @@ public class InfraApplicationPlugin implements Plugin<Project> {
    * The coordinates {@code (group:name:version)} of the
    * {@code infra-dependencies} bom.
    */
-  public static final String BOM_COORDINATES = "cn.taketoday:infra-dependencies:" + INFRA_VERSION;
+  public static final String BOM_COORDINATES = "cn.infra-tech:infra-dependencies:" + INFRA_VERSION;
 
   @Override
   public void apply(Project project) {

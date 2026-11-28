@@ -4,19 +4,19 @@ Gradle plugins for building and running TODAY Infrastructure applications.
 
 ## Plugin Portal IDs
 
-- `cn.taketoday.application`: runs applications, builds executable archives, and provides opt-in AOT processing and GraalVM native-image integration.
+- `cn.infra-tech.application` is the 1.0 series ID. It runs applications, builds executable archives, and provides opt-in AOT processing and GraalVM native-image integration. Published 5.0-Draft versions continue to use `cn.taketoday.application`.
 
 After a version has been published and approved on the Gradle Plugin Portal:
 
 ```groovy
 plugins {
   id 'java'
-  id 'cn.taketoday.application' version '<published-version>'
+  id 'cn.infra-tech.application' version '<published-version>'
 }
 ```
 
 The implementation artifact uses Maven coordinates
-`cn.taketoday:infra-gradle-plugin:<version>`.
+`cn.infra-tech:infra-gradle-plugin:<version>`.
 For builds loading that artifact through `buildscript` or `buildSrc`, the legacy
 ID `infra.application` remains available. The separate `infra.application.aot` ID
 has been removed; use `infraApplication.enableAheadOfTimeProcessing()` instead.

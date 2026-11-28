@@ -3,15 +3,15 @@ description = "Samples Web API"
 apply plugin: "java-library"
 
 dependencies {
-  api 'cn.taketoday:infra-webmvc'
-  api 'cn.taketoday:infra-websocket'
+  api 'cn.infra-tech:infra-webmvc'
+  api 'cn.infra-tech:infra-websocket'
   api 'tools.jackson.core:jackson-databind'
 
   compileOnly 'org.projectlombok:lombok'
   annotationProcessor 'org.projectlombok:lombok'
 
 
-  testImplementation 'cn.taketoday:infra-restclient'
+  testImplementation 'cn.infra-tech:infra-restclient'
 }
 
 infraJar {

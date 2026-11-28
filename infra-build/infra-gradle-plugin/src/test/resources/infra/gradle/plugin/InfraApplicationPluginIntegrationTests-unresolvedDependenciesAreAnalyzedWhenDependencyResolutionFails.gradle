@@ -10,5 +10,5 @@ repositories {
 }
 
 dependencies {
-	implementation('cn.taketoday:infra-starter')
+	implementation('cn.infra-tech:infra-starter')
 }

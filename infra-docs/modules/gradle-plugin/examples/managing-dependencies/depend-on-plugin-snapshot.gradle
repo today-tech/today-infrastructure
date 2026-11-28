@@ -6,6 +6,6 @@ buildscript {
   }
 
   dependencies {
-    classpath 'cn.taketoday:infra-gradle-plugin:{gradle-project-version}'
+    classpath 'cn.infra-tech:infra-gradle-plugin:{gradle-project-version}'
   }
 }
